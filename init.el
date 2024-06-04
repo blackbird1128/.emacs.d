@@ -315,11 +315,20 @@
 
   (setq org-capture-templates
     `(("t" "Tasks / Projects")
-      ("tt" "Task" entry (file+olp "~/org/tasks.org" "Inbox")
-       "* TODO %?\n  %U\n  %a\n  %i" :empty-lines 1)
-      ("tp" "Painpoint" entry (file+olp "~/org/painpoint.org" "Painpoints")
-       "*** TODO %?\n")
+      ("tt" "Task" entry (file+headline "~/org/tasks.org" "Inbox")
+       "* TODO %?\n  %u" )
+      
+      ("tp" "Painpoint" entry (file+headline "~/org/painpoint.org"  "Todo")
+       "* TODO %?\n")
 
+      ("i" "Ideas" entry (file+headline, "~/org/ideas.org" "Ideas")
+       "* %?\n")
+
+      ("b" "Inbox" entry (file+headline, "~/org/inbox.org" "Inbox")
+       "* %?\n")
+
+      ("a" "Ask question" plain (file+headline, "~/org/questions.org" "Questions")
+       "**** %?\n")      
 
       ("l" "List of items")
       ("lb" "To buy" entry (file+olp, "~/org/buy_list.org" "Buy list")
