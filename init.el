@@ -5,13 +5,14 @@
                      (emacs-init-time "%.2f")
                      gcs-done)))
 
-(set-face-attribute 'default nil :font "IosevkaNerdFontMono" :height 115) ; Change to a font we actually have
+(set-face-attribute 'default nil :font "IosevkaNerdFontMono" :height 120) ; Change to a font we actually have
 
 ;; Set the fixed pitch face
-(set-face-attribute 'fixed-pitch nil :font "IosevkaNerdFontMono" :height 115)
+(set-face-attribute 'fixed-pitch nil :font "IosevkaNerdFontMono" :height 120)
 
 ;; Set the variable pitch face
-(set-face-attribute 'variable-pitch nil :font "IosevkaNerdFontPropo" :height 115 :weight 'regular)
+(set-face-attribute 'variable-pitch nil :font "IosevkaNerdFontPropo" :height 120 :weight 'regular)
+
 
 
 (defalias 'yes-or-no-p 'y-or-n-p)

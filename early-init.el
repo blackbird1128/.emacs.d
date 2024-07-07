@@ -1,11 +1,48 @@
 
+(unless noninteractive
+  ;; PERF: Resizing the Emacs frame (to accommodate fonts that are smaller or
+  ;;   larger than the system font) appears to impact startup time
+  ;;   dramatically. The larger the delta in font size, the greater the delay.
+  ;;   Even trivial deltas can yield a ~1000ms loss, though it varies wildly
+  ;;   depending on font size.
+  (setq frame-inhibit-implied-resize t)
+  
+  ;; PERF,UX: Site files tend to use `load-file', which emits "Loading X..."
+  ;;   messages in the echo area. Writing to the echo-area triggers a
+  ;;   redisplay, which can be expensive during startup. This may also cause
+  ;;   an flash of white when creating the first frame.
+  (define-advice load-file (:override (file) silence)
+    (load file nil 'nomessage))
+  ;; COMPAT: But undo our `load-file' advice later, as to limit the scope of
+  ;;   any edge cases it could induce.
+  (define-advice startup--load-user-init-file (:before (&rest _) undo-silence)
+    (advice-remove #'load-file #'load-file@silence))
+
+  (advice-add #'display-startup-echo-area-message :override #'ignore)
+  ;; PERF: Suppress the vanilla startup screen completely. We've disabled it
+  ;;   with `inhibit-startup-screen', but it would still initialize anyway.
+  ;;   This involves some file IO and/or bitmap work (depending on the frame
+  ;;   type) that we can no-op for a free 50-100ms boost in startup time.
+  (advice-add #'display-startup-screen :override #'ignore)
+  
+
+)
+
+(add-to-list 'default-frame-alist
+             '(background-color . "#17191a"))
+
+
 (setq inhibit-startup-message t)
 (setq byte-compile-warnings nil)
 (setq byte-compile-verbose nil)
 
+(add-to-list 'default-frame-alist '(inhibit-double-buffering . t))
+
+
+;; Redisplay settings
+(setq redisplay-dont-pause t)
 
 (setq idle-update-delay 1.0)
-
 
 (setq read-process-output-max (* 4 1024 1024))
 (setq process-adaptive-read-buffering nil)
@@ -13,7 +50,7 @@
 
 
 (setq normal-gc-cons-threshold (* 64 1024 1024))
-(setq init-gc-cons-threshold (* 512  1024 1024))
+(setq init-gc-cons-threshold (* 1024  1024 1024))
   
 (setq gc-cons-threshold init-gc-cons-threshold)
 (add-hook 'emacs-startup-hook
@@ -57,32 +94,8 @@
       scroll-bar-mode nil)
 
 
-(unless noninteractive
-  ;; PERF: Resizing the Emacs frame (to accommodate fonts that are smaller or
-  ;;   larger than the system font) appears to impact startup time
-  ;;   dramatically. The larger the delta in font size, the greater the delay.
-  ;;   Even trivial deltas can yield a ~1000ms loss, though it varies wildly
-  ;;   depending on font size.
-  (setq frame-inhibit-implied-resize t)
-  
-  ;; PERF,UX: Site files tend to use `load-file', which emits "Loading X..."
-  ;;   messages in the echo area. Writing to the echo-area triggers a
-  ;;   redisplay, which can be expensive during startup. This may also cause
-  ;;   an flash of white when creating the first frame.
-  (define-advice load-file (:override (file) silence)
-    (load file nil 'nomessage))
-  ;; COMPAT: But undo our `load-file' advice later, as to limit the scope of
-  ;;   any edge cases it could induce.
-  (define-advice startup--load-user-init-file (:before (&rest _) undo-silence)
-    (advice-remove #'load-file #'load-file@silence))
 
-  (advice-add #'display-startup-echo-area-message :override #'ignore)
-  ;; PERF: Suppress the vanilla startup screen completely. We've disabled it
-  ;;   with `inhibit-startup-screen', but it would still initialize anyway.
-  ;;   This involves some file IO and/or bitmap work (depending on the frame
-  ;;   type) that we can no-op for a free 50-100ms boost in startup time.
-  (advice-add #'display-startup-screen :override #'ignore)
-  
 
- )
+
+ 
 
