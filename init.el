@@ -1,4 +1,3 @@
-
 (add-hook 'emacs-startup-hook
           (lambda ()
             (message "*** Emacs loaded in %s seconds with %d garbage collections."
@@ -6,17 +5,15 @@
                      gcs-done)))
 
 (set-face-attribute 'default nil :font "IosevkaNerdFontMono" :height 120) ; Change to a font we actually have
-
 ;; Set the fixed pitch face
 (set-face-attribute 'fixed-pitch nil :font "IosevkaNerdFontMono" :height 120)
-
 ;; Set the variable pitch face
 (set-face-attribute 'variable-pitch nil :font "IosevkaNerdFontPropo" :height 120 :weight 'regular)
 
-
-
 (defalias 'yes-or-no-p 'y-or-n-p)
 
+(when (fboundp 'windmove-default-keybindings)
+  (windmove-default-keybindings))
 
 (defun remove-elc-when-visit ()
   "When visit, remove <filename>.elc"
@@ -27,9 +24,10 @@
                   (delete-file (concat buffer-file-name "c"))))))
 (add-hook 'emacs-lisp-mode-hook 'remove-elc-when-visit)
 
-
-
 (setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
+(setq delete-auto-save-files t)
+
+
 
 (set-fringe-mode 10)
 
@@ -77,7 +75,13 @@
   ;; Global settings (defaults)
   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
         doom-themes-enable-italic t) ; if nil, italics is universally disabled
-  (load-theme 'doom-palenight t ))
+  (load-theme 'doom-gruvbox t ))
+
+;(set-frame-parameter nil 'alpha-background 98)
+
+;(add-to-list 'default-frame-alist '(alpha-background . 98))
+;(set-background-color "#171d23")
+;(set-foreground-color "#ffffff")
 
 (use-package ivy
   :diminish
@@ -104,6 +108,12 @@
 	 :map minibuffer-local-map
 	 ("C-r" . counsel-minibuffer-history)))
 
+(defun initialize-recentf ()
+  (interactive)
+  (recentf-mode 1)
+  (setq recentf-max-menu-items 25)
+  (global-set-key (kbd "C-x C-r") 'recentf-open-files))
+(initialize-recentf)
 
 (use-package ivy-rich
   :diminish
@@ -120,13 +130,55 @@
   ([remap describe-variable] . counsel-describe-variable)
   ([remap describe-key] . helpful-keys))
 
-;; Latex Settings
+
+(use-package company
+  :diminish
+  :custom
+  (company-minimum-prefix-length 1)
+  (company-idle-delay 0.0)
+  )
+
+(use-package avy)
+(avy-setup-default) 
+(global-set-key (kbd "M-j") 'avy-goto-char-timer)
+
+
+;; languagetool:
+
+(use-package languagetool
+  :commands (languagetoolkcheck
+             languagetool-clear-suggestions
+             languagetool-correct-at-point
+             languagetool-correct-buffer
+             languagetool-set-language
+             languagetool-server-mode
+             languagetool-server-start
+             languagetool-server-stop)
+  :bind
+     (("C-c d" . languagetool-correct-at-point)))
+
+(setq languagetool-java-arguments '("-Dfile.encoding=UTF-8")
+      languagetool-console-command "~/languageTool/languagetool-commandline.jar"
+      languagetool-server-command "~/languageTool/languagetool-server.jar")
+
+
+;; Latex Settingsx
 ;; (server-start)
 
-(setq ispell-dictionnary "french-lrg")
+(add-hook 'LaTeX-mode-hook #'eglot-ensure)
+(add-hook 'LaTeX-mode-hook 'company-mode)
+
+(setq ispell-dictionary "french-lrg")
 (setq ispell-list-command "--list")
-(setq ispell-extra-args '("--sug-mode=slow"))
+(setq ispell-extra-args '("--sug-mode=fast"))
 (setq-default ispell-program-name "aspell")
+
+(add-hook 'LaTeX-mode-hook #'flyspell-mode)
+
+(eval-after-load "flyspell"
+  '(progn
+     (define-key flyspell-mouse-map [down-mouse-3] #'flyspell-correct-word)
+     (define-key flyspell-mouse-map [mouse-3] #'undefined))) ; Set up two finger clicks as left clicks
 
 
 (setq TeX-source-correlate-method "synctext")
@@ -138,6 +190,7 @@
   (setq +latex-viewers '(pdf-tools))
 )
 (add-hook 'pdf-view-mode-hook 'windmove-display-right)
+(setq pdf-annot-color-history '("red" "yellow" "blue" "green"))
 
 
 (use-package visual-fill-column
@@ -256,17 +309,23 @@
   (setq right-margin-width 2)
   (setq header-line-format " ")
   (setq org-hide-emphasis-markers t)
-  (setq org-pretty-entities t)
- )
+  (setq org-pretty-entities t))
+
 
 (use-package org
   :hook
     (org-mode . efs/org-mode-setup)
   :config
   (setq org-ellipsis "▾")
-  (setq org-agenda-start-with-log-mode t)
-  (setq org-log-done 'time)
-  (setq org-log-into-drawer t)
+  (setq org-agenda-files (directory-files-recursively "~/org/" "\\.org$"))
+  (setq org-timeblock-files org-agenda-files)
+  					; (setq org-agenda-start-with-log-mode t)
+  (setq org-agenda-skip-unavailable-files t)
+  (setq org-agenda-mouse-1-follows-link t)
+  (setq org-agenda-skip-scheduled-if-done t)
+  (setq org-agenda-skip-deadline-if-done t)
+  (setq org-log-done nil)
+  (setq org-log-into-drawer nil)
   (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
   (set-face-attribute 'org-code nil   :inherit '(shadow fixed-pitch))
   (set-face-attribute 'org-table nil   :inherit '(shadow fixed-pitch))
@@ -274,27 +333,44 @@
   (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
   (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
   (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch)
-)
+  (setq org-format-latex-options (plist-put org-format-latex-options :scale 1.5))
+
+  )
+
+
+(use-package org-fragtog
+  :hook
+    (org-mode . org-fragtog-mode))
 
 (global-set-key "\C-cl" 'org-store-link)
 (global-set-key "\C-ca" 'org-agenda)
 (global-set-key "\C-cc" 'org-capture)
+(global-set-key "\C-c t" 'org-set-tags-command)
+(global-set-key "\C-cb" 'org-switchb)
 
 (setq org-todo-keywords
-      '((sequence "NEXT(n)" "PROJ(p)"  "WAITING(w)" "TODO(t)" "|" "DONE(d!)" "CANCELED(c!)")
-	(sequence " WISH(i)" "|" "REALIZED(r)")
+      '((sequence "NEXT(n)" "PROJ(p)"  "WAITING(w)" "TODO(t)" "|" "DONE(d)" "CANCELED(c)")
+	(sequence "WISH(i)" "|" "REALIZED(w)")
+	(sequence "TO_READ(r)" "STARTED(s)"   "|" "FINISHED(f)")
 	))
+
+(setq  org-agenda-prefix-format
+  '(
+ (agenda . " %i %-12:c %?-12t% s")
+ (todo . " %i %-12:c")
+ (tags . " %i %-12:c")
+ (search . " %i %-12:c")))
 
 (setq org-tag-alist
       '((:startgroup)
-	   ; Put mutually exclusive tags here
-	(:endgroup)
 	("@home" . ?H)
 	("@college" . ?c)
+	   ; Put mutually exclusive tags here
+	(:endgroup)
 	("agenda" . ?a)
 	("note" . ?n)
 	("idea" . ?i))
-)
+ )
 
 
 ;; Configure custom agenda views
@@ -307,12 +383,7 @@
 	("p" "Painpoints" todo "TODO" ((org-agenda-files '( "~/org/painpoint.org"))))
 	("c" "College Tasks" tags-todo "+@college")
         ("w" "Wishes" todo "WISH" ((org-agenda-prefix-format "")
-				   ))
-	;; Low-effort next actions
-	("e" tags-todo "+TODO=\"NEXT\"+Effort<15&+Effort>0"
-	 ((org-agenda-overriding-header "Low Effort Tasks")
-	  (org-agenda-max-todos 20)
-	  (org-agenda-files org-agenda-files)))))
+				   ))))
 
   (setq org-capture-templates
     `(("t" "Tasks / Projects")
@@ -345,7 +416,30 @@
       ("mm" "Mood" table-line (file+headline "~/org/metrics.org" "Mood")
        "| %U | %^{Mood rating (1-10)|1|2|3|4|5|6|7|8|9|10} | %^{Notes} |" :kill-buffer t)))
 
+(setq org-refile-targets '((org-agenda-files :maxlevel . 2)))
 
+(advice-add 'org-refile :after 'org-save-all-org-buffers)
+
+(use-package calfw)
+(require 'calfw)
+(use-package calfw-org)
+
+
+;; -------------------- Org config end --------------------
+
+;; -------------------- Org style -------------------- 
+
+(with-eval-after-load 'org-faces
+(dolist (face '((org-level-1 . 1.20)
+                  (org-level-2 . 1.10)
+                  (org-level-3 . 1.05)
+                  (org-level-4 . 1.0)
+                  (org-level-5 . 1.05)
+                  (org-level-6 . 1.05)
+                  (org-level-7 . 1.05)
+                  (org-level-8 . 1.05)))
+  
+(set-face-attribute (car face) nil :font "IosevkaNerdFontPropo" :weight 'regular :height (cdr face))))
 
 
 
@@ -357,39 +451,17 @@
   :hook (org-mode . org-appear-mode)
   :config (setq org-hide-emphasis-markers t))
 
+;; setq  org-agenda-tags-column 0
+ ;setq org-agenda-block-separator ?─&
+					;
 
-
-;; -------------------- Org config end --------------------
-
-;; -------------------- Org style -------------------- 
-
-
-(with-eval-after-load 'org-faces
-(dolist (face '((org-level-1 . 1.25)
-                  (org-level-2 . 1.15)
-                  (org-level-3 . 1.05)
-                  (org-level-4 . 1.0)
-                  (org-level-5 . 1.05)
-                  (org-level-6 . 1.05)
-                  (org-level-7 . 1.05)
-                  (org-level-8 . 1.05)))
-  
-(set-face-attribute (car face) nil :font "IosevkaNerdFontPropo" :weight 'regular :height (cdr face))))
-
-(setq org-refile-targets
-      '(("~/org/archive.org" :maxlevel . 1)))
-
-(advice-add 'org-refile :after 'org-save-all-org-buffers)
-
-
-(setq  org-agenda-tags-column 0
- org-agenda-block-separator ?─
- org-agenda-time-grid
+(setq org-agenda-use-time-grid t)
+(setq org-agenda-time-grid
  '((daily today require-timed)
    (800 1000 1200 1400 1600 1800 2000)
    " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
  org-agenda-current-time-string
- "<── now ────────────────────────────")
+ "◀── now ─────────────────────────────────────────────────")
 
 
 (add-hook 'org-mode-hook (lambda () (setq line-spacing 0.2)))
@@ -420,19 +492,21 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(TeX-view-program-selection
-   '(((output-dvi has-no-display-manager) "dvi2tty")
-     ((output-dvi style-pstricks) "dvips and gv") (output-dvi "xdvi")
-     (output-pdf "PDF Tools") (output-html "xdg-open")))
- '(org-agenda-files
-   '("~/org/painpoint.org" "/home/blackbird1128/org/bucket_list.org"
-     "/home/blackbird1128/org/tasks.org"
-     "/home/blackbird1128/.emacs.d/hello.org"))
+   '(((output-dvi has-no-display-manager)
+      "dvi2tty")
+     ((output-dvi style-pstricks)
+      "dvips and gv")
+     (output-dvi "xdvi")
+     (output-pdf "PDF Tools")
+     (output-html "xdg-open")))
+ '(org-timeblock-scale-options '(6 . 22))
  '(package-selected-packages
-   '(auctex cdlatex command-log-mode counsel doom-themes eglot helpful
-	    ivy-rich org-appear org-modern pdf-tools
-	    rainbow-delimiters visual-fill-column which-key yasnippet))
+   '(avy marginalia discover-my-major org-noter calfw calfw-org org-fragtog org-timeblock languagetool company-mode auctex cdlatex command-log-mode counsel doom-themes eglot helpful ivy-rich org-appear org-modern pdf-tools rainbow-delimiters visual-fill-column which-key yasnippet))
  '(warning-suppress-log-types
-   '((server) (pdf-view) (pdf-view) (yasnippet backquote-change)))
+   '((server)
+     (pdf-view)
+     (pdf-view)
+     (yasnippet backquote-change)))
  '(warning-suppress-types '((pdf-view) (pdf-view) (yasnippet backquote-change))))
 
 (custom-set-faces
