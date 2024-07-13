@@ -27,8 +27,6 @@
 (setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
 (setq delete-auto-save-files t)
 
-
-
 (set-fringe-mode 10)
 
 (setq visual-fill-column-width 80)
@@ -77,12 +75,6 @@
         doom-themes-enable-italic t) ; if nil, italics is universally disabled
   (load-theme 'doom-gruvbox t ))
 
-;(set-frame-parameter nil 'alpha-background 98)
-
-;(add-to-list 'default-frame-alist '(alpha-background . 98))
-;(set-background-color "#171d23")
-;(set-foreground-color "#ffffff")
-
 (use-package ivy
   :diminish
   :bind (("C-c s" . swiper)
@@ -130,13 +122,13 @@
   ([remap describe-variable] . counsel-describe-variable)
   ([remap describe-key] . helpful-keys))
 
+  ([remap describe-key] . helpful-key))
 
 (use-package company
   :diminish
   :custom
   (company-minimum-prefix-length 1)
-  (company-idle-delay 0.0)
-  )
+  (company-idle-delay 0.0))
 
 (use-package avy)
 (avy-setup-default) 
@@ -301,7 +293,7 @@
   (setq visual-fill-column-mode 1)))
 
 
-(defun  efs/org-mode-setup ()
+(defun efs/org-mode-setup ()
   (variable-pitch-mode 1)
   (visual-line-mode 0)
   (display-line-numbers-mode -1)
@@ -333,9 +325,7 @@
   (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
   (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
   (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch)
-  (setq org-format-latex-options (plist-put org-format-latex-options :scale 1.5))
-
-  )
+  (setq org-format-latex-options (plist-put org-format-latex-options :scale 1.5)))
 
 
 (use-package org-fragtog
@@ -355,7 +345,7 @@
 	))
 
 (setq  org-agenda-prefix-format
-  '(
+ '(
  (agenda . " %i %-12:c %?-12t% s")
  (todo . " %i %-12:c")
  (tags . " %i %-12:c")
