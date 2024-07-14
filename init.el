@@ -47,11 +47,10 @@
                      (emacs-init-time "%.2f")
                      gcs-done)))
 
-(set-face-attribute 'default nil :font "IosevkaNerdFontMono" :height 120) ; Change to a font we actually have
-;; Set the fixed pitch face
+(set-face-attribute 'default nil :font "IosevkaNerdFontMono" :height 120)
 (set-face-attribute 'fixed-pitch nil :font "IosevkaNerdFontMono" :height 120)
-;; Set the variable pitch face
 (set-face-attribute 'variable-pitch nil :font "IosevkaNerdFontPropo" :height 120 :weight 'regular)
+(set-face-attribute  'fixed-pitch-serif nil  :font "IosevkaNerdFontMono" :height 110 :weight 'light :weight 'bold)
 
 (defalias 'yes-or-no-p 'y-or-n-p)
 
@@ -163,8 +162,6 @@
   ([remap describe-function] . counsel-describe-function)
   ([remap describe-command] . helpful-command)
   ([remap describe-variable] . counsel-describe-variable)
-  ([remap describe-key] . helpful-keys))
-
   ([remap describe-key] . helpful-key))
 
 (use-package company
@@ -197,7 +194,7 @@
       languagetool-server-command "~/languageTool/languagetool-server.jar")
 
 
-;; Latex Settingsx
+;; Latex Settings
 ;; (server-start)
 
 (add-hook 'LaTeX-mode-hook #'eglot-ensure)
@@ -457,14 +454,9 @@
   :init (require 'calfw))
 (use-package calfw-org)
 
-
-;; -------------------- Org config end --------------------
-
-;; -------------------- Org style -------------------- 
-
 (with-eval-after-load 'org-faces
-(dolist (face '((org-level-1 . 1.20)
-                  (org-level-2 . 1.10)
+(dolist (face '((org-level-1 . 1.10)
+                  (org-level-2 . 1.05)
                   (org-level-3 . 1.05)
                   (org-level-4 . 1.0)
                   (org-level-5 . 1.05)
@@ -497,11 +489,10 @@
  org-agenda-current-time-string
  "◀── now ─────────────────────────────────────────────────")
 
-
 (add-hook 'org-mode-hook (lambda () (setq line-spacing 0.2)))
 
 
-(with-eval-after-load 'org (global-org-modern-mode))
+;; -------------------- Org config end --------------------
 
 ;;
 ;; -------- ORG BABEL ------------
@@ -535,7 +526,7 @@
      (output-html "xdg-open")))
  '(org-timeblock-scale-options '(6 . 22))
  '(package-selected-packages
-   '(avy marginalia discover-my-major org-noter calfw calfw-org org-fragtog org-timeblock languagetool company-mode auctex cdlatex command-log-mode counsel doom-themes eglot helpful ivy-rich org-appear org-modern pdf-tools rainbow-delimiters visual-fill-column which-key yasnippet))
+   '(jinx avy marginalia discover-my-major org-noter calfw calfw-org org-fragtog org-timeblock languagetool company-mode auctex cdlatex command-log-mode counsel doom-themes eglot helpful ivy-rich org-appear org-modern pdf-tools rainbow-delimiters visual-fill-column which-key yasnippet))
  '(warning-suppress-log-types
    '((server)
      (pdf-view)
