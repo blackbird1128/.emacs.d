@@ -446,6 +446,12 @@
       ("mm" "Mood" table-line (file+headline "~/org/metrics.org" "Mood")
        "| %U | %^{Mood rating (1-10)|1|2|3|4|5|6|7|8|9|10} | %^{Notes} |" :kill-buffer t)))
 
+(defun my/capture-inbox()
+      (interactive)
+      (org-capture nil "b"))
+
+(global-set-key "\C-ci" 'my/capture-inbox)
+
 (setq org-refile-targets '((org-agenda-files :maxlevel . 2)))
 
 (advice-add 'org-refile :after 'org-save-all-org-buffers)
