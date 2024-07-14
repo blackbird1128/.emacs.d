@@ -1,3 +1,46 @@
+(defvar elpaca-installer-version 0.7)
+(defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
+(defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
+(defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
+(defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
+                              :ref nil :depth 1
+                              :files (:defaults "elpaca-test.el" (:exclude "extensions"))
+                              :build (:not elpaca--activate-package)))
+(let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
+       (build (expand-file-name "elpaca/" elpaca-builds-directory))
+       (order (cdr elpaca-order))
+       (default-directory repo))
+  (add-to-list 'load-path (if (file-exists-p build) build repo))
+  (unless (file-exists-p repo)
+    (make-directory repo t)
+    (when (< emacs-major-version 28) (require 'subr-x))
+    (condition-case-unless-debug err
+        (if-let ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
+                 ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
+                                                 ,@(when-let ((depth (plist-get order :depth)))
+                                                     (list (format "--depth=%d" depth) "--no-single-branch"))
+                                                 ,(plist-get order :repo) ,repo))))
+                 ((zerop (call-process "git" nil buffer t "checkout"
+                                       (or (plist-get order :ref) "--"))))
+                 (emacs (concat invocation-directory invocation-name))
+                 ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
+                                       "--eval" "(byte-recompile-directory \".\" 0 'force)")))
+                 ((require 'elpaca))
+                 ((elpaca-generate-autoloads "elpaca" repo)))
+            (progn (message "%s" (buffer-string)) (kill-buffer buffer))
+          (error "%s" (with-current-buffer buffer (buffer-string))))
+      ((error) (warn "%s" err) (delete-directory repo 'recursive))))
+  (unless (require 'elpaca-autoloads nil t)
+    (require 'elpaca)
+    (elpaca-generate-autoloads "elpaca" repo)
+    (load "./elpaca-autoloads")))
+(add-hook 'after-init-hook #'elpaca-process-queues)
+(elpaca `(,@elpaca-order))
+
+(elpaca elpaca-use-package
+  ;; Enable use-package :ensure support for Elpaca.
+  (elpaca-use-package-mode))
+
 (add-hook 'emacs-startup-hook
           (lambda ()
             (message "*** Emacs loaded in %s seconds with %d garbage collections."
@@ -43,19 +86,19 @@
 		pdf-view-mode-hook))
   (add-hook mode (lambda () (display-line-numbers-mode 0))))
 
-(require 'package)
+;(require 'package)
 
-(setq package-archives '(("melpa" . "https://melpa.org/packages/")
-			 ("org" . "https://orgmode.org/elpa/")
-                         ("elpa" . "https://elpa.gnu.org/packages/")))
+;(setq package-archives '(("melpa" . "https://melpa.org/packages/")
+;			 ("org" . "https://orgmode.org/elpa/")
+;                         ("elpa" . "https://elpa.gnu.org/packages/")))
 
-(package-initialize)
-(unless package-archive-contents
- (package-refresh-contents))
+;(package-initialize)
+;(unless package-archive-contents
+; (package-refresh-contents))
 
 ;; Initialize use-package on non-Linux platforms
-(unless (package-installed-p 'use-package)
-   (package-install 'use-package))
+;(unless (package-installed-p 'use-package)
+;   (package-install 'use-package))
 
 (require 'use-package)
 (setq use-package-always-ensure t)
@@ -130,10 +173,10 @@
   (company-minimum-prefix-length 1)
   (company-idle-delay 0.0))
 
-(use-package avy)
+(use-package avy
+  :init
 (avy-setup-default) 
-(global-set-key (kbd "M-j") 'avy-goto-char-timer)
-
+(global-set-key (kbd "M-j") 'avy-goto-char-timer))
 
 ;; languagetool:
 
@@ -180,16 +223,16 @@
   :magic ("%PDF" . pdf-view-mode)
   :config
   (setq +latex-viewers '(pdf-tools))
-)
-(add-hook 'pdf-view-mode-hook 'windmove-display-right)
-(setq pdf-annot-color-history '("red" "yellow" "blue" "green"))
+  (add-hook 'pdf-view-mode-hook 'windmove-display-right)
+  (setq pdf-annot-color-history '("red" "yellow" "blue" "green"))
+  (pdf-loader-install))
 
 
 (use-package visual-fill-column
   :hook (LaTeX-mode . visual-fill-column-mode))
 
 (use-package latex
-  :ensure auctex
+  :ensure nil
   :hook ((LaTeX-mode . prettify-symbols-mode))
   :bind (:map LaTeX-mode-map
          ("C-S-e" . latex-math-from-calc))
@@ -212,12 +255,6 @@
                                     calc-language latex
                                     calc-prefer-frac t
                                     calc-angle-mode rad))))))))
-
-(use-package cdlatex
-  :ensure t
-  :hook (LaTeX-mode . turn-on-cdlatex)
-  :bind (:map cdlatex-mode-map 
-              ("<tab>" . cdlatex-tab)))
 
 ;; Yasnippet settings
 (use-package yasnippet
@@ -244,7 +281,9 @@
 ;; fields
 (use-package cdlatex
   :hook ((cdlatex-tab . yas-expand)
-         (cdlatex-tab . cdlatex-in-yas-field))
+         (cdlatex-tab . cdlatex-in-yas-field)
+	 (LaTeX-mode . turn-on-cdlatex))
+  :bind (:map cdlatex-mode-map  ("<tab>" . cdlatex-tab))
   :config
   (use-package yasnippet
     :bind (:map yas-keymap
@@ -279,14 +318,11 @@
           (cdlatex-tab)
         (yas-next-field-or-maybe-expand)))))
 
-(pdf-loader-install)
+
 (setq laTeX-default-options "--synctex=1 shell-escape")
 (setq TeX-command-extra-options "--shell-escape")
 
-
-
 ;; Org settings 
-
 
 (defun efs/org-mode-visual-fill ()
   (setq visual-fill-column-width 140
@@ -305,6 +341,7 @@
 
 
 (use-package org
+  :ensure nil
   :hook
     (org-mode . efs/org-mode-setup)
   :config
@@ -355,6 +392,7 @@
       '((:startgroup)
 	("@home" . ?H)
 	("@college" . ?c)
+	("@work" . ?w)
 	   ; Put mutually exclusive tags here
 	(:endgroup)
 	("agenda" . ?a)
@@ -412,6 +450,8 @@
 
 (use-package calfw)
 (require 'calfw)
+(use-package calfw
+  :init (require 'calfw))
 (use-package calfw-org)
 
 
@@ -431,10 +471,10 @@
   
 (set-face-attribute (car face) nil :font "IosevkaNerdFontPropo" :weight 'regular :height (cdr face))))
 
-
-
 (use-package org-modern
-    :mode ("\\.org\\'" . org-mode)
+  :mode ("\\.org\\'" . org-mode)
+  :config (setq org-hide-emphasis-markers t)
+  :init (with-eval-after-load 'org (global-org-modern-mode))
 )
 
 (use-package org-appear
@@ -444,6 +484,7 @@
 ;; setq  org-agenda-tags-column 0
  ;setq org-agenda-block-separator ?─&
 					;
+  )
 
 (setq org-agenda-use-time-grid t)
 (setq org-agenda-time-grid
