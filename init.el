@@ -203,17 +203,22 @@
 (add-hook 'LaTeX-mode-hook #'eglot-ensure)
 (add-hook 'LaTeX-mode-hook 'company-mode)
 
-(setq ispell-dictionary "french-lrg")
-(setq ispell-list-command "--list")
-(setq ispell-extra-args '("--sug-mode=fast"))
-(setq-default ispell-program-name "aspell")
+;(setq ispell-dictionary "french-lrg")
+;(setq ispell-list-command "--list")
+;(setq ispell-extra-args '("--sug-mode=fast"))
+;(setq-default ispell-program-name "aspell")
 
-(add-hook 'LaTeX-mode-hook #'flyspell-mode)
+;(add-hook 'LaTeX-mode-hook #'flyspell-mode)
 
-(eval-after-load "flyspell"
-  '(progn
-     (define-key flyspell-mouse-map [down-mouse-3] #'flyspell-correct-word)
-     (define-key flyspell-mouse-map [mouse-3] #'undefined))) ; Set up two finger clicks as left clicks
+;(eval-after-load "flyspell"
+;  '(progn
+;     (define-key flyspell-mouse-map [down-mouse-3] #'flyspell-correct-word)
+;     (define-key flyspell-mouse-map [mouse-3] #'undefined))) ; Set up two finger clicks as left clicks
+
+(use-package jinx
+  :hook (emacs-startup . global-jinx-mode)
+  :bind (("M-$" . jinx-correct)
+         ("C-M-$" . jinx-languages)))
 
 
 (setq TeX-source-correlate-method "synctext")
@@ -448,8 +453,6 @@
 
 (advice-add 'org-refile :after 'org-save-all-org-buffers)
 
-(use-package calfw)
-(require 'calfw)
 (use-package calfw
   :init (require 'calfw))
 (use-package calfw-org)
