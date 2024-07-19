@@ -1,45 +1,3 @@
-(defvar elpaca-installer-version 0.7)
-(defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
-(defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
-(defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
-(defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
-                              :ref nil :depth 1
-                              :files (:defaults "elpaca-test.el" (:exclude "extensions"))
-                              :build (:not elpaca--activate-package)))
-(let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
-       (build (expand-file-name "elpaca/" elpaca-builds-directory))
-       (order (cdr elpaca-order))
-       (default-directory repo))
-  (add-to-list 'load-path (if (file-exists-p build) build repo))
-  (unless (file-exists-p repo)
-    (make-directory repo t)
-    (when (< emacs-major-version 28) (require 'subr-x))
-    (condition-case-unless-debug err
-        (if-let ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
-                 ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
-                                                 ,@(when-let ((depth (plist-get order :depth)))
-                                                     (list (format "--depth=%d" depth) "--no-single-branch"))
-                                                 ,(plist-get order :repo) ,repo))))
-                 ((zerop (call-process "git" nil buffer t "checkout"
-                                       (or (plist-get order :ref) "--"))))
-                 (emacs (concat invocation-directory invocation-name))
-                 ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
-                                       "--eval" "(byte-recompile-directory \".\" 0 'force)")))
-                 ((require 'elpaca))
-                 ((elpaca-generate-autoloads "elpaca" repo)))
-            (progn (message "%s" (buffer-string)) (kill-buffer buffer))
-          (error "%s" (with-current-buffer buffer (buffer-string))))
-      ((error) (warn "%s" err) (delete-directory repo 'recursive))))
-  (unless (require 'elpaca-autoloads nil t)
-    (require 'elpaca)
-    (elpaca-generate-autoloads "elpaca" repo)
-    (load "./elpaca-autoloads")))
-(add-hook 'after-init-hook #'elpaca-process-queues)
-(elpaca `(,@elpaca-order))
-
-(elpaca elpaca-use-package
-  ;; Enable use-package :ensure support for Elpaca.
-  (elpaca-use-package-mode))
 
 (add-hook 'emacs-startup-hook
           (lambda ()
@@ -72,7 +30,6 @@
 (set-fringe-mode 10)
 
 (setq visual-fill-column-width 80)
-
 (setq visible-bell t)
 
 (column-number-mode)
@@ -85,19 +42,19 @@
 		pdf-view-mode-hook))
   (add-hook mode (lambda () (display-line-numbers-mode 0))))
 
-;(require 'package)
+(require 'package)
 
-;(setq package-archives '(("melpa" . "https://melpa.org/packages/")
-;			 ("org" . "https://orgmode.org/elpa/")
-;                         ("elpa" . "https://elpa.gnu.org/packages/")))
+(setq package-archives '(("melpa" . "https://melpa.org/packages/")
+			 ("org" . "https://orgmode.org/elpa/")
+                         ("elpa" . "https://elpa.gnu.org/packages/")))
 
-;(package-initialize)
-;(unless package-archive-contents
-; (package-refresh-contents))
+(package-initialize)
+(unless package-archive-contents
+ (package-refresh-contents))
 
-;; Initialize use-package on non-Linux platforms
-;(unless (package-installed-p 'use-package)
-;   (package-install 'use-package))
+;Initialize use-package on non-Linux platforms
+(unless (package-installed-p 'use-package)
+   (package-install 'use-package))
 
 (require 'use-package)
 (setq use-package-always-ensure t)
@@ -193,12 +150,15 @@
       languagetool-console-command "~/languageTool/languagetool-commandline.jar"
       languagetool-server-command "~/languageTool/languagetool-server.jar")
 
+(use-package casual-calc
+  :ensure t
+  :bind (:map calc-mode-map ("C-o" . #'casual-calc-tmenu)))
+
 
 ;; Latex Settings
-;; (server-start)
+;;
 
-(add-hook 'LaTeX-mode-hook #'eglot-ensure)
-(add-hook 'LaTeX-mode-hook 'company-mode)
+
 
 ;(setq ispell-dictionary "french-lrg")
 ;(setq ispell-list-command "--list")
@@ -218,27 +178,39 @@
          ("C-M-$" . jinx-languages)))
 
 
-(setq TeX-source-correlate-method "synctext")
-(setq TeX-source-correlate-start-server t)
-(setq TeX-source-correlate-mode 1)
 (use-package pdf-tools
+  :ensure t
   :magic ("%PDF" . pdf-view-mode)
   :config
   (setq +latex-viewers '(pdf-tools))
   (add-hook 'pdf-view-mode-hook 'windmove-display-right)
   (setq pdf-annot-color-history '("red" "yellow" "blue" "green"))
-  (pdf-loader-install))
+  (pdf-loader-install)
+  (pdf-tools-install))
 
 
 (use-package visual-fill-column
   :hook (LaTeX-mode . visual-fill-column-mode))
 
 (use-package latex
-  :ensure nil
+  :ensure auctex
   :hook ((LaTeX-mode . prettify-symbols-mode))
   :bind (:map LaTeX-mode-map
          ("C-S-e" . latex-math-from-calc))
   :config
+  (setq +latex-viewers '(pdf-tools))
+  (setq laTeX-default-options "--synctex=1 shell-escape")
+  (setq TeX-command-extra-options "--shell-escape")
+  (setq TeX-auto-save t)
+  (setq TeX-parse-self t)
+  (setq-default TeX-master nil)
+  (server-start)
+  (add-hook 'LaTeX-mode-hook #'eglot-ensure)
+  (add-hook 'LaTeX-mode-hook 'company-mode)
+  (setq TeX-source-correlate-method "synctext")
+  (setq TeX-source-correlate-start-server t)
+  (setq TeX-source-correlate-mode 1)
+
   ;; Format math as a Latex string with Calc
   (defun latex-math-from-calc ()
     "Evaluate `calc' on the contents of line at point."
@@ -321,8 +293,7 @@
         (yas-next-field-or-maybe-expand)))))
 
 
-(setq laTeX-default-options "--synctex=1 shell-escape")
-(setq TeX-command-extra-options "--shell-escape")
+
 
 ;; Org settings 
 
@@ -461,15 +432,14 @@
 (use-package calfw-org)
 
 (with-eval-after-load 'org-faces
-(dolist (face '((org-level-1 . 1.10)
+(dolist (face '((org-level-1 . 1.15)
                   (org-level-2 . 1.05)
                   (org-level-3 . 1.05)
-                  (org-level-4 . 1.0)
+                  (org-level-4 . 1.05)
                   (org-level-5 . 1.05)
                   (org-level-6 . 1.05)
                   (org-level-7 . 1.05)
-                  (org-level-8 . 1.05)))
-  
+                  (org-level-8 . 1.05)))  
 (set-face-attribute (car face) nil :font "IosevkaNerdFontPropo" :weight 'regular :height (cdr face))))
 
 (use-package org-modern
@@ -480,11 +450,6 @@
 
 (use-package org-appear
   :hook (org-mode . org-appear-mode)
-  :config (setq org-hide-emphasis-markers t))
-
-;; setq  org-agenda-tags-column 0
- ;setq org-agenda-block-separator ?─&
-					;
   )
 
 (setq org-agenda-use-time-grid t)
