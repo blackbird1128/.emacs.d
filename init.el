@@ -1,7 +1,7 @@
 
 (add-hook 'emacs-startup-hook
-          (lambda ()
-            (message "*** Emacs loaded in %s seconds with %d garbage collections."
+	  (lambda ()
+	    (message "*** Emacs loaded in %s seconds with %d garbage collections."
                      (emacs-init-time "%.2f")
                      gcs-done)))
 
@@ -9,6 +9,9 @@
 (set-face-attribute 'fixed-pitch nil :font "IosevkaNerdFontMono" :height 120)
 (set-face-attribute 'variable-pitch nil :font "IosevkaNerdFontPropo" :height 120 :weight 'regular)
 (set-face-attribute  'fixed-pitch-serif nil  :font "IosevkaNerdFontMono" :height 110 :weight 'light :weight 'bold)
+
+(set-face-attribute 'mode-line nil :foreground "black" :background "lightgray" :box nil)
+(set-face-attribute 'mode-line-inactive nil :foreground "gray30" :background "gray90" :box nil)
 
 (defalias 'yes-or-no-p 'y-or-n-p)
 
@@ -28,10 +31,8 @@
 (setq delete-auto-save-files t)
 
 (set-fringe-mode 10)
-
 (setq visual-fill-column-width 80)
 (setq visible-bell t)
-
 (column-number-mode)
 (global-display-line-numbers-mode t)
 
@@ -50,11 +51,11 @@
 
 (package-initialize)
 (unless package-archive-contents
- (package-refresh-contents))
+  (package-refresh-contents))
 
 ;Initialize use-package on non-Linux platforms
 (unless (package-installed-p 'use-package)
-   (package-install 'use-package))
+  (package-install 'use-package))
 
 (require 'use-package)
 (setq use-package-always-ensure t)
@@ -62,42 +63,39 @@
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
 
-(use-package rainbow-delimiters)
-
-(add-hook 'emacs-lisp-mode-hook 'rainbow-delimiters-mode)
+(use-package rainbow-delimiters
+  :hook (emacs-lisp-mode . rainbow-delimiters-mode))
 
 (use-package doom-themes
-  :ensure t
   :config
   ;; Global settings (defaults)
   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-        doom-themes-enable-italic t) ; if nil, italics is universally disabled
+	doom-themes-enable-italic t) ; if nil, italics is universally disabled)
   (load-theme 'doom-gruvbox t ))
 
 (use-package ivy
-  :diminish
   :bind (("C-c s" . swiper)
-         :map ivy-minibuffer-map
-         ("TAB" . ivy-alt-done)	
+	 :map ivy-minibuffer-map
+	 ("TAB" . ivy-alt-done)	
          ("C-l" . ivy-alt-done)
          ("C-j" . ivy-next-line)
          ("C-k" . ivy-previous-line))
   :config
-  (ivy-mode 1)
-)
+  (ivy-mode 1))
 
 (use-package which-key
-  :init (which-key-mode)
-  :diminish which-key-mode
+  :init
+  (which-key-mode)
   :config
   (setq which-key-idle-delay 0.2))
 
 (use-package counsel
-  :bind (("M-x" . counsel-M-x)
-	 ("C-x C-b" . counsel-ibuffer)
-	 ("C-x C-f" . counsel-find-file)
-	 :map minibuffer-local-map
-	 ("C-r" . counsel-minibuffer-history)))
+  :bind
+  (("M-x" . counsel-M-x)
+   ("C-x C-b" . counsel-ibuffer)
+   ("C-x C-f" . counsel-find-file)
+   :map minibuffer-local-map
+   ("C-r" . counsel-minibuffer-history)))
 
 (defun initialize-recentf ()
   (interactive)
@@ -105,11 +103,6 @@
   (setq recentf-max-menu-items 25)
   (global-set-key (kbd "C-x C-r") 'recentf-open-files))
 (initialize-recentf)
-
-(use-package ivy-rich
-  :diminish
-  :init
-  (ivy-rich-mode 1))
 
 (use-package helpful
   :custom
@@ -122,19 +115,24 @@
   ([remap describe-key] . helpful-key))
 
 (use-package company
-  :diminish
+  :hook (emacs-lisp-mode . company-mode)
   :custom
   (company-minimum-prefix-length 1)
   (company-idle-delay 0.0))
 
 (use-package avy
-  :init
-(avy-setup-default) 
-(global-set-key (kbd "M-j") 'avy-goto-char-timer))
+  :config
+  (avy-setup-default)
+  :bind
+  (("M-j" . avy-goto-char-timer)))
 
 ;; languagetool:
 
 (use-package languagetool
+  :config
+  (setq languagetool-java-arguments '("-Dfile.encoding=UTF-8")
+	languagetool-console-command "~/languageTool/languagetool-commandline.jar"
+	languagetool-server-command "~/languageTool/languagetool-server.jar")
   :commands (languagetoolkcheck
              languagetool-clear-suggestions
              languagetool-correct-at-point
@@ -144,33 +142,10 @@
              languagetool-server-start
              languagetool-server-stop)
   :bind
-     (("C-c d" . languagetool-correct-at-point)))
-
-(setq languagetool-java-arguments '("-Dfile.encoding=UTF-8")
-      languagetool-console-command "~/languageTool/languagetool-commandline.jar"
-      languagetool-server-command "~/languageTool/languagetool-server.jar")
+  (("C-c d" . languagetool-correct-at-point)))
 
 (use-package casual-calc
-  :ensure t
   :bind (:map calc-mode-map ("C-o" . #'casual-calc-tmenu)))
-
-
-;; Latex Settings
-;;
-
-
-
-;(setq ispell-dictionary "french-lrg")
-;(setq ispell-list-command "--list")
-;(setq ispell-extra-args '("--sug-mode=fast"))
-;(setq-default ispell-program-name "aspell")
-
-;(add-hook 'LaTeX-mode-hook #'flyspell-mode)
-
-;(eval-after-load "flyspell"
-;  '(progn
-;     (define-key flyspell-mouse-map [down-mouse-3] #'flyspell-correct-word)
-;     (define-key flyspell-mouse-map [mouse-3] #'undefined))) ; Set up two finger clicks as left clicks
 
 (use-package jinx
   :hook (emacs-startup . global-jinx-mode)
@@ -179,7 +154,6 @@
 
 
 (use-package pdf-tools
-  :ensure t
   :magic ("%PDF" . pdf-view-mode)
   :config
   (setq +latex-viewers '(pdf-tools))
@@ -196,7 +170,7 @@
   :ensure auctex
   :hook ((LaTeX-mode . prettify-symbols-mode))
   :bind (:map LaTeX-mode-map
-         ("C-S-e" . latex-math-from-calc))
+              ("C-S-e" . latex-math-from-calc))
   :config
   (setq +latex-viewers '(pdf-tools))
   (setq laTeX-default-options "--synctex=1 shell-escape")
@@ -232,7 +206,6 @@
 
 ;; Yasnippet settings
 (use-package yasnippet
-  :ensure t
   :hook ((LaTeX-mode . yas-minor-mode)
          (post-self-insert . my/yas-try-expanding-auto-snippets))
   :config
@@ -241,7 +214,6 @@
     (cl-pushnew '(yasnippet backquote-change)
                 warning-suppress-types
                 :test 'equal))
-
   (setq yas-triggers-in-field t)
   
   ;; Function that tries to autoexpand YaSnippets
@@ -261,8 +233,8 @@
   :config
   (use-package yasnippet
     :bind (:map yas-keymap
-           ("<tab>" . yas-next-field-or-cdlatex)
-           ("TAB" . yas-next-field-or-cdlatex))
+		("<tab>" . yas-next-field-or-cdlatex)
+		("TAB" . yas-next-field-or-cdlatex))
     :config
     (defun cdlatex-in-yas-field ()
       ;; Check if we're at the end of the Yas field
@@ -282,7 +254,7 @@
                                        (point))
                        (overlay-end yas--active-field-overlay)))
             (goto-char minp) t))))
-
+    
     (defun yas-next-field-or-cdlatex nil
       (interactive)
       "Jump to the next Yas field correctly with cdlatex active."
@@ -292,17 +264,11 @@
           (cdlatex-tab)
         (yas-next-field-or-maybe-expand)))))
 
-
-
-
 ;; Org settings 
 
-(defun efs/org-mode-visual-fill ()
-  (setq visual-fill-column-width 140
-  (setq visual-fill-column-mode 1)))
-
-
 (defun efs/org-mode-setup ()
+  (setq visual-fill-column-width 140)
+  (setq visual-fill-column-mode 1)
   (variable-pitch-mode 1)
   (visual-line-mode 0)
   (display-line-numbers-mode -1)
@@ -312,16 +278,19 @@
   (setq org-hide-emphasis-markers t)
   (setq org-pretty-entities t))
 
-
 (use-package org
-  :ensure nil
   :hook
-    (org-mode . efs/org-mode-setup)
+  (org-mode . efs/org-mode-setup)
+  :bind (("C-c l" . org-store-link)
+	 ("C-c a" . org-agena)
+	 ("C-c c" . org-capture)
+	 ("C-c t" . org-set-tags-command)
+	 ("C-c b" . org-switchb))
   :config
   (setq org-ellipsis "▾")
   (setq org-agenda-files (directory-files-recursively "~/org/" "\\.org$"))
   (setq org-timeblock-files org-agenda-files)
-  					; (setq org-agenda-start-with-log-mode t)
+  ; (setq org-agenda-start-with-log-mode t)
   (setq org-agenda-skip-unavailable-files t)
   (setq org-agenda-mouse-1-follows-link t)
   (setq org-agenda-skip-scheduled-if-done t)
@@ -335,133 +304,116 @@
   (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
   (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
   (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch)
-  (setq org-format-latex-options (plist-put org-format-latex-options :scale 1.5)))
+  (setq org-format-latex-options (plist-put org-format-latex-options :scale 1.5))
+  (setq org-refile-targets '((org-agenda-files :maxlevel . 2)))
+  (advice-add 'org-refile :after 'org-save-all-org-buffers)
+  (setq org-agenda-use-time-grid t)
+  (setq org-agenda-time-grid
+	'((daily today require-timed)
+	  (800 1000 1200 1400 1600 1800 2000)
+	  " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
+	org-agenda-current-time-string
+	"◀── now ─────────────────────────────────────────────────")
+  (add-hook 'org-mode-hook (lambda () (setq line-spacing 0.2))))
 
 
 (use-package org-fragtog
   :hook
-    (org-mode . org-fragtog-mode))
-
-(global-set-key "\C-cl" 'org-store-link)
-(global-set-key "\C-ca" 'org-agenda)
-(global-set-key "\C-cc" 'org-capture)
-(global-set-key "\C-c t" 'org-set-tags-command)
-(global-set-key "\C-cb" 'org-switchb)
+  (org-mode . org-fragtog-mode))
 
 (setq org-todo-keywords
       '((sequence "NEXT(n)" "PROJ(p)"  "WAITING(w)" "TODO(t)" "|" "DONE(d)" "CANCELED(c)")
 	(sequence "WISH(i)" "|" "REALIZED(w)")
-	(sequence "TO_READ(r)" "STARTED(s)"   "|" "FINISHED(f)")
-	))
+	(sequence "TO_READ(r)" "STARTED(s)"   "|" "FINISHED(f)")))
 
 (setq  org-agenda-prefix-format
- '(
- (agenda . " %i %-12:c %?-12t% s")
- (todo . " %i %-12:c")
- (tags . " %i %-12:c")
- (search . " %i %-12:c")))
+       '((agenda . " %i %-12:c %?-12t% s")
+	 (todo . " %i %-12:c")
+	 (tags . " %i %-12:c")
+	 (search . " %i %-12:c")))
 
 (setq org-tag-alist
       '((:startgroup)
 	("@home" . ?H)
 	("@college" . ?c)
 	("@work" . ?w)
-	   ; Put mutually exclusive tags here
+					; Put mutually exclusive tags here
 	(:endgroup)
 	("agenda" . ?a)
 	("note" . ?n)
-	("idea" . ?i))
- )
-
+	("idea" . ?i)))
 
 ;; Configure custom agenda views
 (setq org-agenda-custom-commands
-      '(	
-	("n" "Next Tasks"
+      '(("n" "Next Tasks"
 	 ((todo "NEXT"
 		((org-agenda-overriding-header "Next Tasks")))))
-
 	("p" "Painpoints" todo "TODO" ((org-agenda-files '( "~/org/painpoint.org"))))
 	("c" "College Tasks" tags-todo "+@college")
-        ("w" "Wishes" todo "WISH" ((org-agenda-prefix-format "")
-				   ))))
+        ("w" "Wishes" todo "WISH" ((org-agenda-prefix-format "")))))
 
-  (setq org-capture-templates
-    `(("t" "Tasks / Projects")
-      ("tt" "Task" entry (file+headline "~/org/tasks.org" "Inbox")
-       "* TODO %?\n  %u" )
-      
-      ("tp" "Painpoint" entry (file+headline "~/org/painpoint.org"  "Todo")
-       "* TODO %?\n")
+(setq org-capture-templates
+	`(("t" "Tasks / Projects")
+	  ("tt" "Task" entry (file+headline "~/org/tasks.org" "Inbox")
+	   "* TODO %?\n  %u" )
+	  
+	  ("tp" "Painpoint" entry (file+headline "~/org/painpoint.org"  "Todo")
+	   "* TODO %?\n")
 
-      ("i" "Ideas" entry (file+headline, "~/org/ideas.org" "Ideas")
-       "* %?\n")
+	  ("i" "Ideas" entry (file+headline, "~/org/ideas.org" "Ideas")
+	   "* %?\n")
+	  
+	  ("b" "Inbox" entry (file+headline, "~/org/inbox.org" "Inbox")
+	   "* %?\n")
 
-      ("b" "Inbox" entry (file+headline, "~/org/inbox.org" "Inbox")
-       "* %?\n")
-
-      ("a" "Ask question" plain (file+headline, "~/org/questions.org" "Questions")
-       "**** %?\n")      
-
-      ("l" "List of items")
-      ("lb" "To buy" entry (file+olp, "~/org/buy_list.org" "Buy list")
-       "*** %?\n")
-      
-      ("j" "Journal Entries")
-      ("jj" "Journal" entry
+	  ("a" "Ask question" plain (file+headline, "~/org/questions.org" "Questions")
+	   "**** %?\n")      
+	  
+	  ("l" "List of items")
+	  ("lb" "To buy" entry (file+olp, "~/org/buy_list.org" "Buy list")
+	   "*** %?\n")
+	  
+	  ("j" "Journal Entries")
+	  ("jj" "Journal" entry
            (file+olp+datetree "~/org/journal.org")
            "\n*** %<%I:%M %p> - Journal :journal:\n\n%?\n\n"
            :empty-lines 1)
-      
-      ("m" "Metrics Capture")
-      ("mm" "Mood" table-line (file+headline "~/org/metrics.org" "Mood")
-       "| %U | %^{Mood rating (1-10)|1|2|3|4|5|6|7|8|9|10} | %^{Notes} |" :kill-buffer t)))
+	  
+	  ("m" "Metrics Capture")
+	  ("mm" "Mood" table-line (file+headline "~/org/metrics.org" "Mood")
+	   "| %U | %^{Mood rating (1-10)|1|2|3|4|5|6|7|8|9|10} | %^{Notes} |" :kill-buffer t)))
 
 (defun my/capture-inbox()
-      (interactive)
-      (org-capture nil "b"))
+  (interactive)
+  (org-capture nil "b"))
 
 (global-set-key "\C-ci" 'my/capture-inbox)
 
-(setq org-refile-targets '((org-agenda-files :maxlevel . 2)))
-
-(advice-add 'org-refile :after 'org-save-all-org-buffers)
-
 (use-package calfw
-  :init (require 'calfw))
-(use-package calfw-org)
+  :commands (cfw:open-org-calendar)
+  :config
+  (require 'calfw)
+  (use-package calfw-org))
 
 (with-eval-after-load 'org-faces
-(dolist (face '((org-level-1 . 1.15)
+  (dolist (face '((org-level-1 . 1.15)
                   (org-level-2 . 1.05)
                   (org-level-3 . 1.05)
                   (org-level-4 . 1.05)
                   (org-level-5 . 1.05)
                   (org-level-6 . 1.05)
                   (org-level-7 . 1.05)
-                  (org-level-8 . 1.05)))  
-(set-face-attribute (car face) nil :font "IosevkaNerdFontPropo" :weight 'regular :height (cdr face))))
+                  (org-level-8 . 1.05)))
+  (set-face-attribute (car face) nil :font "IosevkaNerdFontPropo" :weight 'regular :height (cdr face))))
 
 (use-package org-modern
   :mode ("\\.org\\'" . org-mode)
   :config (setq org-hide-emphasis-markers t)
   :init (with-eval-after-load 'org (global-org-modern-mode))
-)
-
-(use-package org-appear
-  :hook (org-mode . org-appear-mode)
   )
 
-(setq org-agenda-use-time-grid t)
-(setq org-agenda-time-grid
- '((daily today require-timed)
-   (800 1000 1200 1400 1600 1800 2000)
-   " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
- org-agenda-current-time-string
- "◀── now ─────────────────────────────────────────────────")
-
-(add-hook 'org-mode-hook (lambda () (setq line-spacing 0.2)))
-
+(use-package org-appear
+  :hook (org-mode . org-appear-mode))
 
 ;; -------------------- Org config end --------------------
 
@@ -475,8 +427,7 @@
  '((emacs-lisp . t)
    (python . t)
    (dot . t)
-   (shell . t))
-)
+   (shell . t)))
 
 (setq org-confirm-babel-evaluate nil)
 
@@ -504,10 +455,3 @@
      (pdf-view)
      (yasnippet backquote-change)))
  '(warning-suppress-types '((pdf-view) (pdf-view) (yasnippet backquote-change))))
-
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
