@@ -293,14 +293,10 @@
   :bind
   (("C-c d" . languagetool-correct-at-point)))
 
-(use-package casual-calc
-  :bind (:map calc-mode-map ("C-o" . #'casual-calc-tmenu)))
-
 (use-package jinx
   :hook (emacs-startup . global-jinx-mode)
   :bind (("M-$" . jinx-correct)
          ("C-M-$" . jinx-languages)))
-
 
 (use-package pdf-tools
   :magic ("%PDF" . pdf-view-mode)
@@ -310,7 +306,6 @@
   (setq pdf-annot-color-history '("red" "yellow" "blue" "green"))
   (pdf-loader-install)
   (pdf-tools-install))
-
 
 (use-package visual-fill-column
   :hook (LaTeX-mode . visual-fill-column-mode))
@@ -352,6 +347,12 @@
                                     calc-language latex
                                     calc-prefer-frac t
                                     calc-angle-mode rad))))))))
+
+(use-package citar
+  :straight t
+  :hook
+  (LaTeX-mode . citar-capf-setup)
+  (org-mode . citar-capf-setup))
 
 ;; Yasnippet settings
 (use-package yasnippet
@@ -465,7 +466,6 @@
 	"◀── now ─────────────────────────────────────────────────")
   (add-hook 'org-mode-hook (lambda () (setq line-spacing 0.2))))
 
-
 (use-package org-fragtog
   :hook
   (org-mode . org-fragtog-mode))
@@ -537,6 +537,7 @@
   (org-capture nil "b"))
 
 (global-set-key "\C-ci" 'my/capture-inbox)
+(global-set-key "\C-cw" 'dictionary-lookup-definition)
 
 (use-package calfw
   :commands (cfw:open-org-calendar)
@@ -558,8 +559,7 @@
 (use-package org-modern
   :mode ("\\.org\\'" . org-mode)
   :config (setq org-hide-emphasis-markers t)
-  :init (with-eval-after-load 'org (global-org-modern-mode))
-  )
+  :hook (org-mode . global-org-modern-mode))
 
 (use-package org-appear
   :hook (org-mode . org-appear-mode))
@@ -597,10 +597,16 @@
      (output-html "xdg-open")))
  '(org-timeblock-scale-options '(6 . 22))
  '(package-selected-packages
-   '(jinx avy marginalia discover-my-major org-noter calfw calfw-org org-fragtog org-timeblock languagetool company-mode auctex cdlatex command-log-mode counsel doom-themes eglot helpful ivy-rich org-appear org-modern pdf-tools rainbow-delimiters visual-fill-column which-key yasnippet))
+   '(citar jinx avy marginalia discover-my-major org-noter calfw calfw-org org-fragtog org-timeblock languagetool company-mode auctex cdlatex command-log-mode counsel doom-themes eglot helpful ivy-rich org-appear org-modern pdf-tools rainbow-delimiters visual-fill-column which-key yasnippet))
  '(warning-suppress-log-types
    '((server)
      (pdf-view)
      (pdf-view)
      (yasnippet backquote-change)))
  '(warning-suppress-types '((pdf-view) (pdf-view) (yasnippet backquote-change))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
