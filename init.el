@@ -1,3 +1,20 @@
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name
+        "straight/repos/straight.el/bootstrap.el"
+        (or (bound-and-true-p straight-base-dir)
+            user-emacs-directory)))
+      (bootstrap-version 7))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
+
+
 
 (add-hook 'emacs-startup-hook
 	  (lambda ()
@@ -9,9 +26,6 @@
 (set-face-attribute 'fixed-pitch nil :font "IosevkaNerdFontMono" :height 120)
 (set-face-attribute 'variable-pitch nil :font "IosevkaNerdFontPropo" :height 120 :weight 'regular)
 (set-face-attribute  'fixed-pitch-serif nil  :font "IosevkaNerdFontMono" :height 110 :weight 'light :weight 'bold)
-
-(set-face-attribute 'mode-line nil :foreground "black" :background "lightgray" :box nil)
-(set-face-attribute 'mode-line-inactive nil :foreground "gray30" :background "gray90" :box nil)
 
 (defalias 'yes-or-no-p 'y-or-n-p)
 
@@ -61,7 +75,6 @@
 (setq use-package-always-ensure t)
 
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
-
 
 (use-package rainbow-delimiters
   :hook (emacs-lisp-mode . rainbow-delimiters-mode))
