@@ -14,8 +14,6 @@
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
-
-
 (add-hook 'emacs-startup-hook
 	  (lambda ()
 	    (message "*** Emacs loaded in %s seconds with %d garbage collections."
@@ -86,14 +84,6 @@
 	doom-themes-enable-italic t) ; if nil, italics is universally disabled)
   (load-theme 'doom-gruvbox t ))
 
-(use-package ivy
-  :bind (("C-c s" . swiper)
-	 :map ivy-minibuffer-map
-	 ("TAB" . ivy-alt-done)	
-         ("C-l" . ivy-alt-done)
-         ("C-j" . ivy-next-line)
-         ("C-k" . ivy-previous-line)))
-
 ;; Enable rich annotations using the Marginalia package
 (use-package marginalia
   ;; Bind `marginalia-cycle' locally in the minibuffer.  To make the binding
@@ -107,7 +97,11 @@
 
 (use-package vertico
   :straight t
-  ;:custom
+					;:custom
+;  :custom
+  ;; Option 1: Additional bindings
+  ;; Option 2: Replace `vertico-insert' to enable TAB prefix expansion.
+
   ;; (vertico-scroll-margin 0) ;; Different scroll margin
   ;; (vertico-count 20) ;; Show more candidates
   ;; (vertico-resize t) ;; Grow and shrink the Vertico minibuffer
@@ -122,9 +116,19 @@
   ;; Configure a custom style dispatcher (see the Consult wiki)
   ;; (orderless-style-dispatchers '(+orderless-consult-dispatch orderless-affix-dispatch))
   ;; (orderless-component-separator #'orderless-escapable-split-on-space)
-  (completion-styles '(orderless basic))
+
+  (defun company-completion-styles (capf-fn &rest args)
+    (let ((completion-styles '(basic partial-completion)))
+    (apply capf-fn args)))
+  (advice-add 'company-capf :around #'company-completion-styles)
+  
+  (completion-styles '(substring orderless basic))
   (completion-category-defaults nil)
   (completion-category-overrides '((file (styles partial-completion)))))
+
+;; We follow a suggestion by company maintainer u/hvis:
+;; https://www.reddit.com/r/emacs/comments/nichkl/comment/gz1jr3s/
+
 
 ;; Example configuration for Consult
 (use-package consult
@@ -135,7 +139,7 @@
          ("C-c h" . consult-history)
          ("C-c k" . consult-kmacro)
          ("C-c m" . consult-man)
-         ("C-c i" . consult-info)
+         ;("C-c i" . consult-info)
          ([remap Info-search] . consult-info)
          ;; C-x bindings in `ctl-x-map'
          ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
@@ -237,14 +241,6 @@
   (which-key-mode)
   :config
   (setq which-key-idle-delay 0.2))
-
-(use-package counsel
-  :bind
-  (("M-x" . counsel-M-x)
-   ("C-x C-b" . counsel-ibuffer)
-   ("C-x C-f" . counsel-find-file)
-   :map minibuffer-local-map
-   ("C-r" . counsel-minibuffer-history)))
 
 (defun initialize-recentf ()
   (interactive)
