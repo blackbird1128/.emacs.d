@@ -1,4 +1,3 @@
-
 (unless noninteractive
   ;; PERF: Resizing the Emacs frame (to accommodate fonts that are smaller or
   ;;   larger than the system font) appears to impact startup time
@@ -23,15 +22,12 @@
   ;;   with `inhibit-startup-screen', but it would still initialize anyway.
   ;;   This involves some file IO and/or bitmap work (depending on the frame
   ;;   type) that we can no-op for a free 50-100ms boost in startup time.
-  (advice-add #'display-startup-screen :override #'ignore)
-  
-
-)
+  (advice-add #'display-startup-screen :override #'ignore))
 
 (add-to-list 'default-frame-alist
              '(background-color . "#17191a"))
 
-
+(setq package-enable-at-startup nil)
 (setq inhibit-startup-message t)
 (setq byte-compile-warnings nil)
 (setq byte-compile-verbose nil)
@@ -59,10 +55,10 @@
 (setq load-prefer-newer noninteractive)
 
 
-(put 'mode-line-format 'initial-value (default-toplevel-value 'mode-line-format))
-(setq-default mode-line-format nil)
-(dolist (buf (buffer-list))
-  (with-current-buffer buf (setq mode-line-format nil)))
+;(put 'mode-line-format 'initial-value (default-toplevel-value 'mode-line-format))
+;(setq-default mode-line-format nil)
+;(dolist (buf (buffer-list))
+;  (with-current-buffer buf (setq mode-line-format nil)))
 
 ;; PERF: A second, case-insensitive pass over `auto-mode-alist' is time wasted.
 (setq auto-mode-case-fold nil)
