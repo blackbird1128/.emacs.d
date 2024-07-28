@@ -101,17 +101,25 @@
   :init
   (marginalia-mode))
 
+(defun my/backward-delete ()
+  "delete back a word or a directory"
+  (interactive)
+  (if (eq 'file (vertico--metadata-get 'category))
+	  (vertico-directory-delete-word 1)
+	  (backward-kill-word 1)))
+
+;(define-key minibuffer-local-filename-completion-map (kbd "DEL") #'my-backward-delete-to-slash)
+
 (use-package vertico
   :straight t
-					;:custom
-;  :custom
-  ;; Option 1: Additional bindings
-  ;; Option 2: Replace `vertico-insert' to enable TAB prefix expansion.
-
+  :hook (rfn-eshadow-update-overlay . vertico-directory-tidy)
+  ;  :custom
   ;; (vertico-scroll-margin 0) ;; Different scroll margin
   ;; (vertico-count 20) ;; Show more candidates
   ;; (vertico-resize t) ;; Grow and shrink the Vertico minibuffer
   ;; (vertico-cycle t) ;; Enable cycling for `vertico-next/previous'
+  :bind (:map vertico-map
+	      ("DEL" . my/backward-delete))
   :init
   (vertico-mode))
 
@@ -119,22 +127,14 @@
 (use-package orderless
   :straight t
   :custom
-  ;; Configure a custom style dispatcher (see the Consult wiki)
-  ;; (orderless-style-dispatchers '(+orderless-consult-dispatch orderless-affix-dispatch))
-  ;; (orderless-component-separator #'orderless-escapable-split-on-space)
-
-  (defun company-completion-styles (capf-fn &rest args)
-    (let ((completion-styles '(basic partial-completion)))
-    (apply capf-fn args)))
-  (advice-add 'company-capf :around #'company-completion-styles)
-  
   (completion-styles '(substring orderless basic))
   (completion-category-defaults nil)
   (completion-category-overrides '((file (styles partial-completion)))))
 
-;; We follow a suggestion by company maintainer u/hvis:
-;; https://www.reddit.com/r/emacs/comments/nichkl/comment/gz1jr3s/
-
+(defun company-completion-styles (capf-fn &rest args)
+    (let ((completion-styles '(basic partial-completion)))
+      (apply capf-fn args)))
+(advice-add 'company-capf :around #'company-completion-styles)
 
 ;; Example configuration for Consult
 (use-package consult
@@ -192,7 +192,6 @@
          :map minibuffer-local-map
          ("M-s" . consult-history)                 ;; orig. next-matching-history-element
          ("M-r" . consult-history))                ;; orig. previous-matching-history-element
-
   ;; Enable automatic preview at point in the *Completions* buffer. This is
   ;; relevant when you use the default completion UI.
   :hook (completion-list-mode . consult-preview-at-point-mode)
@@ -216,14 +215,6 @@
   ;; Configure other variables and modes in the :config section,
   ;; after lazily loading the package.
   :config
-
-  ;; Optionally configure preview. The default value
-  ;; is 'any, such that any key triggers the preview.
-  ;; (setq consult-preview-key 'any)
-  ;; (setq consult-preview-key "M-.")
-  ;; (setq consult-preview-key '("S-<down>" "S-<up>"))
-  ;; For some commands and buffer sources it is useful to configure the
-  ;; :preview-key on a per-command basis using the `consult-customize' macro.
   (consult-customize
    consult-theme :preview-key '(:debounce 0.2 any)
    consult-ripgrep consult-git-grep consult-grep
@@ -236,11 +227,7 @@
   ;; Optionally configure the narrowing key.
   ;; Both < and C-+ work reasonably well.
   (setq consult-narrow-key "<") ;; "C-+"
-
-  ;; Optionally make narrowing help available in the minibuffer.
-  ;; You may want to use `embark-prefix-help-command' or which-key instead.
-  ;; (keymap-set consult-narrow-map (concat consult-narrow-key " ?") #'consult-narrow-help)
-)
+  )
 
 (use-package which-key
   :init
