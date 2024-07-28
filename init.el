@@ -20,15 +20,38 @@
                      (emacs-init-time "%.2f")
                      gcs-done)))
 
-(set-face-attribute 'default nil :font "IosevkaNerdFontMono" :height 120)
-(set-face-attribute 'fixed-pitch nil :font "IosevkaNerdFontMono" :height 120)
-(set-face-attribute 'variable-pitch nil :font "IosevkaNerdFontPropo" :height 120 :weight 'regular)
-(set-face-attribute  'fixed-pitch-serif nil  :font "IosevkaNerdFontMono" :height 110 :weight 'light :weight 'bold)
 
-(defalias 'yes-or-no-p 'y-or-n-p)
+(use-package emacs
+  :demand
+  :bind (( "C-x C-b" . switch-to-buffer))
+  :custom
+    (read-extended-command-predicate #'command-completion-default-include-p)
+  :config
+  (set-face-attribute 'default nil :font "IosevkaNerdFontMono" :height 120)
+  (set-face-attribute 'fixed-pitch nil :font "IosevkaNerdFontMono" :height 120)
+  (set-face-attribute 'variable-pitch nil :font "IosevkaNerdFontPropo" :height 120 :weight 'regular)
+  (set-face-attribute  'fixed-pitch-serif nil  :font "IosevkaNerdFontMono" :height 110 :weight 'light :weight 'bold)
+  
+  (defalias 'yes-or-no-p 'y-or-n-p)
+  
+  (setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
+  (setq delete-auto-save-files t)
+  
+  (set-fringe-mode 10)
+  (setq visual-fill-column-width 80)
+  (setq visible-bell t)
+  (column-number-mode)
+  (global-display-line-numbers-mode t)
 
-(when (fboundp 'windmove-default-keybindings)
-  (windmove-default-keybindings))
+  
+  (dolist (mode '(org-mode-hook
+	          term-mode-hook
+		  shell-mode-hook
+		  eshell-mode-hook
+		pdf-view-mode-hook))
+    (add-hook mode (lambda () (display-line-numbers-mode 0))))
+  (global-set-key (kbd "<escape>") 'keyboard-escape-quit))
+
 
 (defun remove-elc-when-visit ()
   "When visit, remove <filename>.elc"
@@ -38,22 +61,6 @@
               (if (file-exists-p (concat buffer-file-name "c"))
                   (delete-file (concat buffer-file-name "c"))))))
 (add-hook 'emacs-lisp-mode-hook 'remove-elc-when-visit)
-
-(setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
-(setq delete-auto-save-files t)
-
-(set-fringe-mode 10)
-(setq visual-fill-column-width 80)
-(setq visible-bell t)
-(column-number-mode)
-(global-display-line-numbers-mode t)
-
-(dolist (mode '(org-mode-hook
-	        term-mode-hook
-		shell-mode-hook
-		eshell-mode-hook
-		pdf-view-mode-hook))
-  (add-hook mode (lambda () (display-line-numbers-mode 0))))
 
 (require 'package)
 
@@ -72,7 +79,6 @@
 (require 'use-package)
 (setq use-package-always-ensure t)
 
-(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
 (use-package rainbow-delimiters
   :hook (emacs-lisp-mode . rainbow-delimiters-mode))
