@@ -453,24 +453,20 @@
 	  " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
 	org-agenda-current-time-string
 	"◀── now ─────────────────────────────────────────────────")
-  (add-hook 'org-mode-hook (lambda () (setq line-spacing 0.2))))
 
-(use-package org-fragtog
-  :hook
-  (org-mode . org-fragtog-mode))
 
-(setq org-todo-keywords
-      '((sequence "NEXT(n)" "PROJ(p)"  "WAITING(w)" "TODO(t)" "|" "DONE(d)" "CANCELED(c)")
-	(sequence "WISH(i)" "|" "REALIZED(w)")
-	(sequence "TO_READ(r)" "STARTED(s)"   "|" "FINISHED(f)")))
-
-(setq  org-agenda-prefix-format
-       '((agenda . " %i %-12:c %?-12t% s")
-	 (todo . " %i %-12:c")
-	 (tags . " %i %-12:c")
-	 (search . " %i %-12:c")))
-
-(setq org-tag-alist
+  (setq org-todo-keywords
+	'((sequence "NEXT(n)" "PROJ(p)"  "WAITING(w)" "TODO(t)" "|" "DONE(d)" "CANCELED(c)")
+	  (sequence "WISH(i)" "|" "REALIZED(w)")
+	  (sequence "TO_READ(r)" "STARTED(s)"   "|" "FINISHED(f)")))
+  
+  (setq  org-agenda-prefix-format
+	 '((agenda . " %i %-12:c %?-12t% s")
+	   (todo . " %i %-12:c")
+	   (tags . " %i %-12:c")
+	   (search . " %i %-12:c")))
+  
+  (setq org-tag-alist
       '((:startgroup)
 	("@home" . ?H)
 	("@college" . ?c)
@@ -480,17 +476,17 @@
 	("agenda" . ?a)
 	("note" . ?n)
 	("idea" . ?i)))
-
-;; Configure custom agenda views
-(setq org-agenda-custom-commands
-      '(("n" "Next Tasks"
-	 ((todo "NEXT"
+  
+  ;; Configure custom agenda views
+  (setq org-agenda-custom-commands
+	'(("n" "Next Tasks"
+	   ((todo "NEXT"
 		((org-agenda-overriding-header "Next Tasks")))))
-	("p" "Painpoints" todo "TODO" ((org-agenda-files '( "~/org/painpoint.org"))))
-	("c" "College Tasks" tags-todo "+@college")
-        ("w" "Wishes" todo "WISH" ((org-agenda-prefix-format "")))))
-
-(setq org-capture-templates
+	  ("p" "Painpoints" todo "TODO" ((org-agenda-files '( "~/org/painpoint.org"))))
+	  ("c" "College Tasks" tags-todo "+@college")
+          ("w" "Wishes" todo "WISH" ((org-agenda-prefix-format "")))))
+  
+  (setq org-capture-templates
 	`(("t" "Tasks / Projects")
 	  ("tt" "Task" entry (file+headline "~/org/tasks.org" "Inbox")
 	   "* TODO %?\n  %u" )
@@ -503,7 +499,7 @@
 	  
 	  ("b" "Inbox" entry (file+headline, "~/org/inbox.org" "Inbox")
 	   "* %?\n")
-
+	  
 	  ("a" "Ask question" plain (file+headline, "~/org/questions.org" "Questions")
 	   "**** %?\n")      
 	  
@@ -520,13 +516,35 @@
 	  ("m" "Metrics Capture")
 	  ("mm" "Mood" table-line (file+headline "~/org/metrics.org" "Mood")
 	   "| %U | %^{Mood rating (1-10)|1|2|3|4|5|6|7|8|9|10} | %^{Notes} |" :kill-buffer t)))
+  
+  
+  (add-hook 'org-mode-hook (lambda () (setq line-spacing 0.2)))
+  ;;
+  ;; -------- ORG BABEL ------------
+  
+  (setq org-babel-python-command "python3")
+  
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((emacs-lisp . t)
+     (python . t)
+     (dot . t)
+     (shell . t)))
+  
+  (setq org-confirm-babel-evaluate nil)
 
-(defun my/capture-inbox()
-  (interactive)
-  (org-capture nil "b"))
-
-(global-set-key "\C-ci" 'my/capture-inbox)
-(global-set-key "\C-cw" 'dictionary-lookup-definition)
+  (defun my/capture-inbox()
+    (interactive)
+    (org-capture nil "b"))
+  
+  (global-set-key "\C-ci" 'my/capture-inbox)
+  (global-set-key "\C-cw" 'dictionary-lookup-definition)
+  ;; -------------------
+  
+  )
+(use-package org-fragtog
+  :hook
+  (org-mode . org-fragtog-mode))
 
 (use-package calfw
   :commands (cfw:open-org-calendar)
@@ -555,21 +573,7 @@
 
 ;; -------------------- Org config end --------------------
 
-;;
-;; -------- ORG BABEL ------------
 
-(setq org-babel-python-command "python3")
-
-(org-babel-do-load-languages
- 'org-babel-load-languages
- '((emacs-lisp . t)
-   (python . t)
-   (dot . t)
-   (shell . t)))
-
-(setq org-confirm-babel-evaluate nil)
-
-;; --------------------
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -585,8 +589,6 @@
      (output-pdf "PDF Tools")
      (output-html "xdg-open")))
  '(org-timeblock-scale-options '(6 . 22))
- '(package-selected-packages
-   '(citar jinx avy marginalia discover-my-major org-noter calfw calfw-org org-fragtog org-timeblock languagetool company-mode auctex cdlatex command-log-mode counsel doom-themes eglot helpful ivy-rich org-appear org-modern pdf-tools rainbow-delimiters visual-fill-column which-key yasnippet))
  '(warning-suppress-log-types
    '((server)
      (pdf-view)
