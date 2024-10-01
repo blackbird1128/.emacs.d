@@ -19,13 +19,20 @@
 	    (message "*** Emacs loaded in %s seconds with %d garbage collections."
                      (emacs-init-time "%.2f")
                      gcs-done)))
+(straight-use-package 'org)
 
+(use-package no-littering
+  :straight t
+  :init
+  (require 'no-littering))
 
 (use-package emacs
   :demand
   :bind (( "C-x C-b" . switch-to-buffer))
   :custom
-    (read-extended-command-predicate #'command-completion-default-include-p)
+  (enable-recursive-minibuffers t)
+  (read-extended-command-predicate #'command-completion-default-include-p)
+  (tab-always-indent 'complete)
   :config
   (set-face-attribute 'default nil :font "IosevkaNerdFontMono" :height 120)
   (set-face-attribute 'fixed-pitch nil :font "IosevkaNerdFontMono" :height 120)
@@ -42,7 +49,7 @@
   (setq visible-bell t)
   (column-number-mode)
   (global-display-line-numbers-mode t)
-
+  (setq sentence-end-double-space nil)
   
   (dolist (mode '(org-mode-hook
 	          term-mode-hook
@@ -67,7 +74,6 @@
 (setq package-archives '(("melpa" . "https://melpa.org/packages/")
 			 ("org" . "https://orgmode.org/elpa/")
                          ("elpa" . "https://elpa.gnu.org/packages/")))
-
 (package-initialize)
 (unless package-archive-contents
   (package-refresh-contents))
@@ -79,9 +85,10 @@
 (require 'use-package)
 (setq use-package-always-ensure t)
 
-
 (use-package rainbow-delimiters
-  :hook (emacs-lisp-mode . rainbow-delimiters-mode))
+  :hook ((emacs-lisp-mode . rainbow-delimiters-mode)
+	 (scheme-mode . rainbow-delimiters-mode)
+	 ))
 
 (use-package doom-themes
   :config
@@ -101,27 +108,26 @@
   :init
   (marginalia-mode))
 
-(defun my/backward-delete ()
-  "delete back a word or a directory"
-  (interactive)
-  (if (eq 'file (vertico--metadata-get 'category))
-	  (vertico-directory-delete-word 1)
-	  (backward-kill-word 1)))
-
-;(define-key minibuffer-local-filename-completion-map (kbd "DEL") #'my-backward-delete-to-slash)
-
 (use-package vertico
   :straight t
-  :hook (rfn-eshadow-update-overlay . vertico-directory-tidy)
   ;  :custom
   ;; (vertico-scroll-margin 0) ;; Different scroll margin
   ;; (vertico-count 20) ;; Show more candidates
   ;; (vertico-resize t) ;; Grow and shrink the Vertico minibuffer
   ;; (vertico-cycle t) ;; Enable cycling for `vertico-next/previous'
-  :bind (:map vertico-map
-	      ("DEL" . my/backward-delete))
   :init
   (vertico-mode))
+
+(use-package vertico-directory
+  :after vertico
+  :ensure nil
+  ;; More convenient directory navigation commands
+  :bind (:map vertico-map
+              ("RET" . vertico-directory-enter)
+              ("DEL" . vertico-directory-delete-char)
+              ("M-DEL" . vertico-directory-delete-word))
+  ;; Tidy shadowed file names
+  :hook (rfn-eshadow-update-overlay . vertico-directory-tidy))
 
 ;; Optionally use the `orderless' completion style.
 (use-package orderless
@@ -131,12 +137,6 @@
   (completion-category-defaults nil)
   (completion-category-overrides '((file (styles partial-completion)))))
 
-(defun company-completion-styles (capf-fn &rest args)
-    (let ((completion-styles '(basic partial-completion)))
-      (apply capf-fn args)))
-(advice-add 'company-capf :around #'company-completion-styles)
-
-;; Example configuration for Consult
 (use-package consult
   :straight t
   ;; Replace bindings. Lazily loaded by `use-package'.
@@ -155,62 +155,10 @@
          ("C-x t b" . consult-buffer-other-tab)    ;; orig. switch-to-buffer-other-tab
          ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
          ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
-         ;; Custom M-# bindings for fast register access
-         ("M-#" . consult-register-load)
-         ("M-'" . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
-         ("C-M-#" . consult-register)
-         ;; Other custom bindings
-         ("M-y" . consult-yank-pop)                ;; orig. yank-pop
-         ;; M-g bindings in `goto-map'
-         ("M-g e" . consult-compile-error)
-         ("M-g f" . consult-flymake)               ;; Alternative: consult-flycheck
-         ("M-g g" . consult-goto-line)             ;; orig. goto-line
-         ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
-         ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
-         ("M-g m" . consult-mark)
-         ("M-g k" . consult-global-mark)
-         ("M-g i" . consult-imenu)
-         ("M-g I" . consult-imenu-multi)
-         ;; M-s bindings in `search-map'
-         ("M-s d" . consult-find)                  ;; Alternative: consult-fd
-         ("M-s c" . consult-locate)
-         ("M-s g" . consult-grep)
-         ("M-s G" . consult-git-grep)
-         ("M-s r" . consult-ripgrep)
-         ("M-s l" . consult-line)
-         ("M-s L" . consult-line-multi)
-         ("M-s k" . consult-keep-lines)
-         ("M-s u" . consult-focus-lines)
-         ;; Isearch integration
-         ("M-s e" . consult-isearch-history)
-         :map isearch-mode-map
-         ("M-e" . consult-isearch-history)         ;; orig. isearch-edit-string
-         ("M-s e" . consult-isearch-history)       ;; orig. isearch-edit-string
-         ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
-         ("M-s L" . consult-line-multi)            ;; needed by consult-line to detect isearch
-         ;; Minibuffer history
-         :map minibuffer-local-map
-         ("M-s" . consult-history)                 ;; orig. next-matching-history-element
-         ("M-r" . consult-history))                ;; orig. previous-matching-history-element
+	 )
   ;; Enable automatic preview at point in the *Completions* buffer. This is
   ;; relevant when you use the default completion UI.
   :hook (completion-list-mode . consult-preview-at-point-mode)
-
-  ;; The :init configuration is always executed (Not lazy)
-  :init
-  ;; Optionally configure the register formatting. This improves the register
-  ;; preview for `consult-register', `consult-register-load',
-  ;; `consult-register-store' and the Emacs built-ins.
-  (setq register-preview-delay 0.5
-        register-preview-function #'consult-register-format)
-
-  ;; Optionally tweak the register preview window.
-  ;; This adds thin lines, sorting and hides the mode line of the window.
-  (advice-add #'register-preview :override #'consult-register-window)
-
-  ;; Use Consult to select xref locations with preview
-  (setq xref-show-xrefs-function #'consult-xref
-        xref-show-definitions-function #'consult-xref)
 
   ;; Configure other variables and modes in the :config section,
   ;; after lazily loading the package.
@@ -227,7 +175,28 @@
   ;; Optionally configure the narrowing key.
   ;; Both < and C-+ work reasonably well.
   (setq consult-narrow-key "<") ;; "C-+"
-  )
+)
+
+
+;(add-to-list 'auto-mode-alist '("\\.rktl\\'" . scheme-mode))
+
+(use-package embark
+  :bind
+  (("C-;" . embark-act)         ;; pick some comfortable binding
+   ("C-:" . embark-dwim)        ;; good alternative: M-.
+   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+
+  :config
+  ;; Hide the mode line of the Embark live/completions buffers
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none)))))
+
+;; Consult users will also want the embark-consult package.
+(use-package embark-consult
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
 
 (use-package which-key
   :init
@@ -235,12 +204,15 @@
   :config
   (setq which-key-idle-delay 0.2))
 
+;(use-package geiser-racket)
+
 (defun initialize-recentf ()
   (interactive)
   (recentf-mode 1)
   (setq recentf-max-menu-items 25)
   (global-set-key (kbd "C-x C-r") 'recentf-open-files))
 (initialize-recentf)
+
 
 (use-package helpful
   :custom
@@ -252,11 +224,32 @@
   ([remap describe-variable] . helpful-variable)
   ([remap describe-key] . helpful-key))
 
-(use-package company
-  :hook (emacs-lisp-mode . company-mode)
-  :custom
-  (company-minimum-prefix-length 1)
-  (company-idle-delay 0.0))
+(use-package corfu
+   :straight (corfu :files (:defaults "extensions/*")
+                   :includes (corfu-popupinfo))
+  :config
+  ;; Enable auto completion and configure quitting
+  (setq corfu-auto t
+	corfu-cycle t
+	corfu-preselect 'directory
+	corfu-quit-no-match t
+        corfu-auto-delay  0
+        corfu-auto-prefix 1)
+
+  :bind
+  (:map corfu-map
+        ("TAB" . corfu-next)
+        ([tab] . corfu-next)
+        ("S-TAB" . corfu-previous)
+        ([backtab] . corfu-previous))
+  :init
+  (global-corfu-mode))
+
+(use-package corfu-popupinfo
+  :ensure nil
+  :config
+  (corfu-popupinfo-mode)
+  (setq corfu-popupinfo-delay 0.5))
 
 (use-package avy
   :config
@@ -283,6 +276,7 @@
   (("C-c d" . languagetool-correct-at-point)))
 
 (use-package jinx
+  :defer 2
   :hook (emacs-startup . global-jinx-mode)
   :bind (("M-$" . jinx-correct)
          ("C-M-$" . jinx-languages)))
@@ -290,8 +284,7 @@
 (use-package pdf-tools
   :magic ("%PDF" . pdf-view-mode)
   :config
-  (setq +latex-viewers '(pdf-tools))
-  (add-hook 'pdf-view-mode-hook 'windmove-display-right)
+
   (setq pdf-annot-color-history '("red" "yellow" "blue" "green"))
   (pdf-loader-install)
   (pdf-tools-install))
@@ -306,36 +299,23 @@
               ("C-S-e" . latex-math-from-calc))
   :config
   (setq +latex-viewers '(pdf-tools))
-  (setq laTeX-default-options "--synctex=1 shell-escape")
   (setq TeX-command-extra-options "--shell-escape")
+  (add-hook 'pdf-view-mode-hook 'windmove-display-right)
   (setq TeX-auto-save t)
   (setq TeX-parse-self t)
   (setq-default TeX-master nil)
-  (server-start)
+  (add-hook 'LaTeX-mode-hook
+            (lambda ()
+              (setq lsp-tex-server 'digestiff)
+              (put 'LaTeX-mode 'eglot-language-id "latex")
+              (eglot-ensure)))
+  
   (add-hook 'LaTeX-mode-hook #'eglot-ensure)
-  (add-hook 'LaTeX-mode-hook 'company-mode)
   (setq TeX-source-correlate-method "synctext")
   (setq TeX-source-correlate-start-server t)
   (setq TeX-source-correlate-mode 1)
-
-  ;; Format math as a Latex string with Calc
-  (defun latex-math-from-calc ()
-    "Evaluate `calc' on the contents of line at point."
-    (interactive)
-    (cond ((region-active-p)
-           (let* ((beg (region-beginning))
-                  (end (region-end))
-                  (string (buffer-substring-no-properties beg end)))
-             (kill-region beg end)
-             (insert (calc-eval `(,string calc-language latex
-                                          calc-prefer-frac t
-                                          calc-angle-mode rad)))))
-          (t (let ((l (thing-at-point 'line)))
-               (end-of-line 1) (kill-line 0) 
-               (insert (calc-eval `(,l
-                                    calc-language latex
-                                    calc-prefer-frac t
-                                    calc-angle-mode rad))))))))
+  (add-hook 'TeX-after-compilation-finished-functions
+            #'TeX-revert-document-buffer))
 
 (use-package citar
   :straight t
@@ -403,7 +383,22 @@
           (cdlatex-tab)
         (yas-next-field-or-maybe-expand)))))
 
-;; Org settings 
+;; Org settings
+
+
+(use-package org-roam
+  :straight t
+  :defer 2
+  :init
+  (setq org-roam-v2-ack t)
+  :custom
+  (org-roam-directory (file-truename "~/life_db"))
+  :bind (("C-c n l" . org-roam-buffer-toggle)
+         ("C-c n f" . org-roam-node-find)
+         ("C-c n i" . org-roam-node-insert)
+         ("C-c n t" . org-roam-dailies-capture-today))
+  :config
+  (org-roam-setup))
 
 (defun efs/org-mode-setup ()
   (setq visual-fill-column-width 140)
@@ -421,7 +416,7 @@
   :hook
   (org-mode . efs/org-mode-setup)
   :bind (("C-c l" . org-store-link)
-	 ("C-c a" . org-agena)
+	 ("C-c a" . org-agenda)
 	 ("C-c c" . org-capture)
 	 ("C-c t" . org-set-tags-command)
 	 ("C-c b" . org-switchb))
@@ -546,16 +541,16 @@
   :hook
   (org-mode . org-fragtog-mode))
 
-(use-package calfw
-  :commands (cfw:open-org-calendar)
-  :config
-  (require 'calfw)
-  (use-package calfw-org))
+;(use-package calfw
+;  :commands (cfw:open-org-calendar)
+;  :config
+;  (require 'calfw)
+;  (use-package calfw-org))
 
 (with-eval-after-load 'org-faces
-  (dolist (face '((org-level-1 . 1.15)
-                  (org-level-2 . 1.05)
-                  (org-level-3 . 1.05)
+  (dolist (face '((org-level-1 . 1.50)
+                  (org-level-2 . 1.30)
+                  (org-level-3 . 1.10)
                   (org-level-4 . 1.05)
                   (org-level-5 . 1.05)
                   (org-level-6 . 1.05)
@@ -572,8 +567,6 @@
   :hook (org-mode . org-appear-mode))
 
 ;; -------------------- Org config end --------------------
-
-
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -595,9 +588,3 @@
      (pdf-view)
      (yasnippet backquote-change)))
  '(warning-suppress-types '((pdf-view) (pdf-view) (yasnippet backquote-change))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
