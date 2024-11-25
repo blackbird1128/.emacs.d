@@ -19,7 +19,39 @@
 	    (message "*** Emacs loaded in %s seconds with %d garbage collections."
                      (emacs-init-time "%.2f")
                      gcs-done)))
+
+
+(defun normalize-to-filename (input)
+  "Normalize a string INPUT into a filename-friendly format."
+  (let* ((normalized (downcase input)) ; Step 1: Convert to lowercase
+         (normalized (replace-regexp-in-string "\n" " " normalized)) ; Step 2: Replace newlines with spaces
+         (normalized (replace-regexp-in-string "[^[:alnum:][:space:]_]" "" normalized)) ; Step 3: Remove special characters
+         (normalized (replace-regexp-in-string "[[:space:]]+" "_" normalized)) ; Step 4: Replace spaces with underscores
+         (normalized (replace-regexp-in-string "^_+" "" normalized)) ; Step 5: Remove leading underscores
+         (normalized (replace-regexp-in-string "_+$" "" normalized))) ; Step 6: Remove trailing underscores
+    normalized))
+
+
+(defun create-file-with-normalized-filename ()
+  "Normalize a string or region into a filename and create a new file."
+  (interactive)
+  (let* ((input (if (use-region-p)
+                    (buffer-substring-no-properties (region-beginning) (region-end))
+                  (read-string "Enter string to normalize: ")))
+         (filename (normalize-to-filename input)))
+    (let ((filepath (read-file-name "Create file at directory: " nil nil nil filename)))
+      (unless (file-exists-p filepath)
+        (write-region "" nil filepath)
+        (message "File created: %s" filepath))
+      (find-file filepath))))
+
+(defun opam-env ()
+  (interactive nil)
+  (dolist (var (car (read-from-string (shell-command-to-string "opam config env --sexp"))))
+    (setenv (car var) (cadr var))))
+
 (straight-use-package 'org)
+(opam-env)
 
 (use-package no-littering
   :straight t
@@ -84,6 +116,7 @@
 
 (require 'use-package)
 (setq use-package-always-ensure t)
+(setq use-package-enable-imenu-support t)
 
 (use-package rainbow-delimiters
   :hook ((emacs-lisp-mode . rainbow-delimiters-mode)
@@ -281,6 +314,28 @@
   :bind (("M-$" . jinx-correct)
          ("C-M-$" . jinx-languages)))
 
+;;;;;;;;;;;;;;;;;;;;; coq-setup
+
+(use-package proof-general
+  :straight t
+  :config
+  (setq coq-prog-name "/home/alex/.local/share/opam/quantic-coq/bin/coqtop"
+	proof-three-window-enable t
+	proof-splash-enable nil
+	proof-next-command-insert-space nil
+	proof-electric-terminator-enable nil
+	PA-one-command-per-line nil))
+
+(custom-set-faces
+ '(proof-locked-face ((t (:background "#3c3836")))))
+
+
+(use-package company-coq
+  :straight t
+  :hook (coq-mode . company-coq-mode))
+
+;;;;;;;;;;;;;;;;;;
+
 (use-package pdf-tools
   :magic ("%PDF" . pdf-view-mode)
   :config
@@ -321,7 +376,9 @@
   :straight t
   :hook
   (LaTeX-mode . citar-capf-setup)
-  (org-mode . citar-capf-setup))
+  (org-mode . citar-capf-setup)
+  :config
+  (setq citar-bibliography '("~/org/phd/doctorat_aj.bib")))
 
 ;; Yasnippet settings
 (use-package yasnippet
@@ -556,11 +613,15 @@
                   (org-level-6 . 1.05)
                   (org-level-7 . 1.05)
                   (org-level-8 . 1.05)))
-  (set-face-attribute (car face) nil :font "IosevkaNerdFontPropo" :weight 'regular :height (cdr face))))
+    (set-face-attribute (car face) nil :font "IosevkaNerdFontPropo" :weight 'regular :height (cdr face))))
+
+
 
 (use-package org-modern
   :mode ("\\.org\\'" . org-mode)
   :config (setq org-hide-emphasis-markers t)
+  (setq org-modern-star 'replace)
+  
   :hook (org-mode . global-org-modern-mode))
 
 (use-package org-appear
@@ -581,10 +642,27 @@
      (output-dvi "xdvi")
      (output-pdf "PDF Tools")
      (output-html "xdg-open")))
+ '(coq-use-project-file t)
  '(org-timeblock-scale-options '(6 . 22))
+ '(safe-local-variable-values
+   '((coq-prog-name . "dune coq top")
+     (coq-dependency-analyzer . "./_opam/bin/coqdep")
+     (coq-use-project-file 'f)
+     (coq-compiler . "./_opam/bin/coqc")
+     (coq-dependency-analyzer "./_opam/bin/coqdep")
+     (coq-use-project-file f)
+     (coq-compiler . "./_opam/bin/coq")
+     (coq-prog-name . "./_opam/bin/coqtop")))
  '(warning-suppress-log-types
    '((server)
      (pdf-view)
      (pdf-view)
      (yasnippet backquote-change)))
  '(warning-suppress-types '((pdf-view) (pdf-view) (yasnippet backquote-change))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
+(put 'downcase-region 'disabled nil)
