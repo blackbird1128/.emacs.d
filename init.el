@@ -20,6 +20,9 @@
                      (emacs-init-time "%.2f")
                      gcs-done)))
 
+(setq custom-file (concat user-emacs-directory "custom.el"))
+(when (file-exists-p custom-file)
+  (load custom-file))
 
 (defun normalize-to-filename (input)
   "Normalize a string INPUT into a filename-friendly format."
@@ -50,8 +53,10 @@
   (dolist (var (car (read-from-string (shell-command-to-string "opam config env --sexp"))))
     (setenv (car var) (cadr var))))
 
-(straight-use-package 'org)
 (opam-env)
+(add-to-list 'exec-path (concat (getenv "OPAM_SWITCH_PREFIX") "/bin"))
+
+(straight-use-package 'org)
 
 (use-package no-littering
   :straight t
@@ -66,10 +71,10 @@
   (read-extended-command-predicate #'command-completion-default-include-p)
   (tab-always-indent 'complete)
   :config
-  (set-face-attribute 'default nil :font "IosevkaNerdFontMono" :height 120)
-  (set-face-attribute 'fixed-pitch nil :font "IosevkaNerdFontMono" :height 120)
-  (set-face-attribute 'variable-pitch nil :font "IosevkaNerdFontPropo" :height 120 :weight 'regular)
-  (set-face-attribute  'fixed-pitch-serif nil  :font "IosevkaNerdFontMono" :height 110 :weight 'light :weight 'bold)
+  (set-face-attribute 'default nil :font "IosevkaNerdFontMono" :height 130)
+  (set-face-attribute 'fixed-pitch nil :font "IosevkaNerdFontMono" :height 130)
+  (set-face-attribute 'variable-pitch nil :font "IosevkaNerdFontPropo" :height 130 :weight 'regular)
+  (set-face-attribute  'fixed-pitch-serif nil  :font "IosevkaNerdFontMono" :height 120 :weight 'light :weight 'bold)
   
   (defalias 'yes-or-no-p 'y-or-n-p)
   
@@ -210,9 +215,6 @@
   (setq consult-narrow-key "<") ;; "C-+"
 )
 
-
-;(add-to-list 'auto-mode-alist '("\\.rktl\\'" . scheme-mode))
-
 (use-package embark
   :bind
   (("C-;" . embark-act)         ;; pick some comfortable binding
@@ -237,15 +239,12 @@
   :config
   (setq which-key-idle-delay 0.2))
 
-;(use-package geiser-racket)
-
 (defun initialize-recentf ()
   (interactive)
   (recentf-mode 1)
   (setq recentf-max-menu-items 25)
   (global-set-key (kbd "C-x C-r") 'recentf-open-files))
 (initialize-recentf)
-
 
 (use-package helpful
   :custom
@@ -319,7 +318,7 @@
 (use-package proof-general
   :straight t
   :config
-  (setq coq-prog-name "/home/alex/.local/share/opam/quantic-coq/bin/coqtop"
+  (setq
 	proof-three-window-enable t
 	proof-splash-enable nil
 	proof-next-command-insert-space nil
@@ -442,14 +441,13 @@
 
 ;; Org settings
 
-
 (use-package org-roam
   :straight t
   :defer 2
   :init
   (setq org-roam-v2-ack t)
   :custom
-  (org-roam-directory (file-truename "~/life_db"))
+  (org-roam-directory (file-truename "~/kb"))
   :bind (("C-c n l" . org-roam-buffer-toggle)
          ("C-c n f" . org-roam-node-find)
          ("C-c n i" . org-roam-node-insert)
@@ -594,7 +592,8 @@
   ;; -------------------
   
   )
-(use-package org-fragtog
+
+(use-package org-fragtog 
   :hook
   (org-mode . org-fragtog-mode))
 
@@ -615,8 +614,6 @@
                   (org-level-8 . 1.05)))
     (set-face-attribute (car face) nil :font "IosevkaNerdFontPropo" :weight 'regular :height (cdr face))))
 
-
-
 (use-package org-modern
   :mode ("\\.org\\'" . org-mode)
   :config (setq org-hide-emphasis-markers t)
@@ -628,41 +625,3 @@
   :hook (org-mode . org-appear-mode))
 
 ;; -------------------- Org config end --------------------
-
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(TeX-view-program-selection
-   '(((output-dvi has-no-display-manager)
-      "dvi2tty")
-     ((output-dvi style-pstricks)
-      "dvips and gv")
-     (output-dvi "xdvi")
-     (output-pdf "PDF Tools")
-     (output-html "xdg-open")))
- '(coq-use-project-file t)
- '(org-timeblock-scale-options '(6 . 22))
- '(safe-local-variable-values
-   '((coq-prog-name . "dune coq top")
-     (coq-dependency-analyzer . "./_opam/bin/coqdep")
-     (coq-use-project-file 'f)
-     (coq-compiler . "./_opam/bin/coqc")
-     (coq-dependency-analyzer "./_opam/bin/coqdep")
-     (coq-use-project-file f)
-     (coq-compiler . "./_opam/bin/coq")
-     (coq-prog-name . "./_opam/bin/coqtop")))
- '(warning-suppress-log-types
-   '((server)
-     (pdf-view)
-     (pdf-view)
-     (yasnippet backquote-change)))
- '(warning-suppress-types '((pdf-view) (pdf-view) (yasnippet backquote-change))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
-(put 'downcase-region 'disabled nil)
