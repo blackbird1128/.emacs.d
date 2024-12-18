@@ -313,6 +313,9 @@
   :bind (("M-$" . jinx-correct)
          ("C-M-$" . jinx-languages)))
 
+(use-package magit
+  :straight t)
+
 ;;;;;;;;;;;;;;;;;;;;; coq-setup
 
 (use-package proof-general
@@ -334,6 +337,39 @@
   :hook (coq-mode . company-coq-mode))
 
 ;;;;;;;;;;;;;;;;;;
+
+(use-package tuareg
+  :ensure t
+  :mode (("\\.ocamlinit\\'" . tuareg-mode)))
+
+(use-package merlin
+  :ensure t
+  :config
+  (add-hook 'tuareg-mode-hook #'merlin-mode)
+  (define-key merlin-mode-map (kbd "M-.") #'merlin-locate)
+  (define-key merlin-mode-map (kbd "M-,") #'merlin-pop-stack))
+
+(use-package eglot
+  :init
+  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
+  :hook ((tuareg-mode .  eglot-ensure ))
+         ;; if you want which-key integration)
+  :commands (eglot))
+
+(use-package opam-switch-mode
+  :ensure t
+  :hook
+  ((coq-mode tuareg-mode) . opam-switch-mode))
+
+(use-package utop
+  :straight t
+  :ensure t)
+
+(use-package ocamlformat
+  :straight t
+  :custom (ocamlformat-enable 'enable-outside-detected-project)
+  :hook (before-save . ocamlformat-before-save)
+  )
 
 (use-package pdf-tools
   :magic ("%PDF" . pdf-view-mode)
