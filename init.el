@@ -48,6 +48,11 @@
         (message "File created: %s" filepath))
       (find-file filepath))))
 
+(use-package direnv
+  :straight t
+  :config
+  (direnv-mode))
+
 (defun opam-env ()
   (interactive nil)
   (dolist (var (car (read-from-string (shell-command-to-string "opam config env --sexp"))))
@@ -71,10 +76,10 @@
   (read-extended-command-predicate #'command-completion-default-include-p)
   (tab-always-indent 'complete)
   :config
-  (set-face-attribute 'default nil :font "IosevkaNerdFontMono" :height 130)
-  (set-face-attribute 'fixed-pitch nil :font "IosevkaNerdFontMono" :height 130)
-  (set-face-attribute 'variable-pitch nil :font "IosevkaNerdFontPropo" :height 130 :weight 'regular)
-  (set-face-attribute  'fixed-pitch-serif nil  :font "IosevkaNerdFontMono" :height 120 :weight 'light :weight 'bold)
+  (set-face-attribute 'default nil :font "IosevkaNerdFontMono" :height 145)
+  (set-face-attribute 'fixed-pitch nil :font "IosevkaNerdFontMono" :height 145)
+  (set-face-attribute 'variable-pitch nil :font "IosevkaNerdFontPropo" :height 145 :weight 'regular)
+  (set-face-attribute  'fixed-pitch-serif nil  :font "IosevkaNerdFontMono" :height 140 :weight 'light :weight 'bold)
   
   (defalias 'yes-or-no-p 'y-or-n-p)
   
@@ -148,11 +153,6 @@
 
 (use-package vertico
   :straight t
-  ;  :custom
-  ;; (vertico-scroll-margin 0) ;; Different scroll margin
-  ;; (vertico-count 20) ;; Show more candidates
-  ;; (vertico-resize t) ;; Grow and shrink the Vertico minibuffer
-  ;; (vertico-cycle t) ;; Enable cycling for `vertico-next/previous'
   :init
   (vertico-mode))
 
