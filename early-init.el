@@ -34,7 +34,6 @@
 
 (add-to-list 'default-frame-alist '(inhibit-double-buffering . t))
 
-
 ;; Redisplay settings
 (setq redisplay-dont-pause t)
 
@@ -45,7 +44,7 @@
 
 
 
-(setq normal-gc-cons-threshold (* 64 1024 1024))
+(setq normal-gc-cons-threshold (* 256 1024 1024))
 (setq init-gc-cons-threshold (* 1024  1024 1024))
   
 (setq gc-cons-threshold init-gc-cons-threshold)
@@ -53,7 +52,6 @@
    (lambda () (setq gc-cons-threshold normal-gc-cons-threshold)))
 
 (setq load-prefer-newer noninteractive)
-
 
 ;(put 'mode-line-format 'initial-value (default-toplevel-value 'mode-line-format))
 ;(setq-default mode-line-format nil)
@@ -88,10 +86,3 @@
 (setq menu-bar-mode nil
       tool-bar-mode nil
       scroll-bar-mode nil)
-
-
-
-
-
- 
-

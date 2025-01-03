@@ -20,6 +20,7 @@
                      (emacs-init-time "%.2f")
                      gcs-done)))
 
+(setq native-comp-async-report-warnings-errors nil)
 (setq custom-file (concat user-emacs-directory "custom.el"))
 (when (file-exists-p custom-file)
   (load custom-file))
@@ -33,7 +34,6 @@
          (normalized (replace-regexp-in-string "^_+" "" normalized)) ; Step 5: Remove leading underscores
          (normalized (replace-regexp-in-string "_+$" "" normalized))) ; Step 6: Remove trailing underscores
     normalized))
-
 
 (defun create-file-with-normalized-filename ()
   "Normalize a string or region into a filename and create a new file."
@@ -113,9 +113,11 @@
 
 (require 'package)
 
-(setq package-archives '(("melpa" . "https://melpa.org/packages/")
-			 ("org" . "https://orgmode.org/elpa/")
-                         ("elpa" . "https://elpa.gnu.org/packages/")))
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
+(add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/"))
+(add-to-list 'package-archives '("elpa" . "https://elpa.gnu.org/packages/"))
+			
+
 (package-initialize)
 (unless package-archive-contents
   (package-refresh-contents))
@@ -128,16 +130,16 @@
 (setq use-package-always-ensure t)
 (setq use-package-enable-imenu-support t)
 
+(use-package try)
+
 (use-package rainbow-delimiters
   :hook ((emacs-lisp-mode . rainbow-delimiters-mode)
-	 (scheme-mode . rainbow-delimiters-mode)
-	 ))
+	 (scheme-mode . rainbow-delimiters-mode) ))
 
 (use-package doom-themes
   :config
-  ;; Global settings (defaults)
   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-	doom-themes-enable-italic t) ; if nil, italics is universally disabled)
+	doom-themes-enable-italic t) ; if nil, italics is universally disabled
   (load-theme 'doom-gruvbox t ))
 
 ;; Enable rich annotations using the Marginalia package
@@ -159,7 +161,6 @@
 (use-package vertico-directory
   :after vertico
   :ensure nil
-  ;; More convenient directory navigation commands
   :bind (:map vertico-map
               ("RET" . vertico-directory-enter)
               ("DEL" . vertico-directory-delete-char)
@@ -190,7 +191,6 @@
          ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
          ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
          ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
-         ("C-x t b" . consult-buffer-other-tab)    ;; orig. switch-to-buffer-other-tab
          ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
          ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
 	 )
@@ -198,8 +198,6 @@
   ;; relevant when you use the default completion UI.
   :hook (completion-list-mode . consult-preview-at-point-mode)
 
-  ;; Configure other variables and modes in the :config section,
-  ;; after lazily loading the package.
   :config
   (consult-customize
    consult-theme :preview-key '(:debounce 0.2 any)
@@ -210,9 +208,7 @@
    ;; :preview-key "M-."
    :preview-key '(:debounce 0.4 any))
 
-  ;; Optionally configure the narrowing key.
-  ;; Both < and C-+ work reasonably well.
-  (setq consult-narrow-key "<") ;; "C-+"
+  (setq consult-narrow-key "<")
 )
 
 (use-package embark
@@ -342,18 +338,24 @@
   :ensure t
   :mode (("\\.ocamlinit\\'" . tuareg-mode)))
 
-(use-package merlin
-  :ensure t
-  :config
-  (add-hook 'tuareg-mode-hook #'merlin-mode)
-  (define-key merlin-mode-map (kbd "M-.") #'merlin-locate)
-  (define-key merlin-mode-map (kbd "M-,") #'merlin-pop-stack))
+(defun remove-highlight () (setq mouse-highlight nil))
 
 (use-package eglot
   :init
-  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
+  (add-hook 'eglot-managed-mode-hook 'remove-highlight)
+  :bind
+  (:map eglot-keymap
+   ("r" . eglot-rename)                ;; Rename
+   ("a" . eglot-code-actions)         ;; Code actions
+   ("f" . eglot-format)               ;; Format buffer
+   ("h" . eldoc-doc-buffer)           ;; Show documentation
+   ("d" . eglot-find-declaration)     ;; Go to declaration
+   ("i" . eglot-find-implementation)  ;; Go to implementation
+   ("t" . eglot-find-type-definition)) ;; Go to type definition
+  :config
+  (define-prefix-command 'eglot-keymap)    ;; Define the prefix keymap
+  (global-set-key (kbd "C-c l") 'eglot-keymap) ;; Bind C-c l to the prefix keymap
   :hook ((tuareg-mode .  eglot-ensure ))
-         ;; if you want which-key integration)
   :commands (eglot))
 
 (use-package opam-switch-mode
@@ -361,15 +363,10 @@
   :hook
   ((coq-mode tuareg-mode) . opam-switch-mode))
 
-(use-package utop
-  :straight t
-  :ensure t)
-
 (use-package ocamlformat
   :straight t
   :custom (ocamlformat-enable 'enable-outside-detected-project)
-  :hook (before-save . ocamlformat-before-save)
-  )
+  :hook (before-save . ocamlformat-before-save))
 
 (use-package pdf-tools
   :magic ("%PDF" . pdf-view-mode)
@@ -506,7 +503,7 @@
 (use-package org
   :hook
   (org-mode . efs/org-mode-setup)
-  :bind (("C-c l" . org-store-link)
+  :bind (
 	 ("C-c a" . org-agenda)
 	 ("C-c c" . org-capture)
 	 ("C-c t" . org-set-tags-command)
@@ -515,13 +512,13 @@
   (setq org-ellipsis "▾")
   (setq org-agenda-files (directory-files-recursively "~/org/" "\\.org$"))
   (setq org-timeblock-files org-agenda-files)
-  ; (setq org-agenda-start-with-log-mode t)
   (setq org-agenda-skip-unavailable-files t)
   (setq org-agenda-mouse-1-follows-link t)
   (setq org-agenda-skip-scheduled-if-done t)
   (setq org-agenda-skip-deadline-if-done t)
   (setq org-log-done nil)
   (setq org-log-into-drawer nil)
+  (setq line-spacing 0.2)
   (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
   (set-face-attribute 'org-code nil   :inherit '(shadow fixed-pitch))
   (set-face-attribute 'org-table nil   :inherit '(shadow fixed-pitch))
@@ -540,7 +537,6 @@
 	org-agenda-current-time-string
 	"◀── now ─────────────────────────────────────────────────")
 
-
   (setq org-todo-keywords
 	'((sequence "NEXT(n)" "PROJ(p)"  "WAITING(w)" "TODO(t)" "|" "DONE(d)" "CANCELED(c)")
 	  (sequence "WISH(i)" "|" "REALIZED(w)")
@@ -555,7 +551,6 @@
   (setq org-tag-alist
       '((:startgroup)
 	("@home" . ?H)
-	("@college" . ?c)
 	("@work" . ?w)
 					; Put mutually exclusive tags here
 	(:endgroup)
@@ -569,7 +564,6 @@
 	   ((todo "NEXT"
 		((org-agenda-overriding-header "Next Tasks")))))
 	  ("p" "Painpoints" todo "TODO" ((org-agenda-files '( "~/org/painpoint.org"))))
-	  ("c" "College Tasks" tags-todo "+@college")
           ("w" "Wishes" todo "WISH" ((org-agenda-prefix-format "")))))
   
   (setq org-capture-templates
@@ -602,10 +596,6 @@
 	  ("m" "Metrics Capture")
 	  ("mm" "Mood" table-line (file+headline "~/org/metrics.org" "Mood")
 	   "| %U | %^{Mood rating (1-10)|1|2|3|4|5|6|7|8|9|10} | %^{Notes} |" :kill-buffer t)))
-  
-  
-  (add-hook 'org-mode-hook (lambda () (setq line-spacing 0.2)))
-  ;;
   ;; -------- ORG BABEL ------------
   
   (setq org-babel-python-command "python3")
@@ -624,10 +614,7 @@
     (org-capture nil "b"))
   
   (global-set-key "\C-ci" 'my/capture-inbox)
-  (global-set-key "\C-cw" 'dictionary-lookup-definition)
-  ;; -------------------
-  
-  )
+  (global-set-key "\C-cw" 'dictionary-lookup-definition))
 
 (use-package org-fragtog 
   :hook
