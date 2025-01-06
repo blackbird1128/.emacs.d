@@ -99,7 +99,12 @@
 		  eshell-mode-hook
 		pdf-view-mode-hook))
     (add-hook mode (lambda () (display-line-numbers-mode 0))))
-  (global-set-key (kbd "<escape>") 'keyboard-escape-quit))
+  (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+  
+  (recentf-mode 1)
+  (setq recentf-max-menu-items 25)
+  (global-set-key (kbd "C-x C-r") 'recentf-open-files)
+  (initialize-recentf))
 
 
 (defun remove-elc-when-visit ()
@@ -235,13 +240,6 @@
   :config
   (setq which-key-idle-delay 0.2))
 
-(defun initialize-recentf ()
-  (interactive)
-  (recentf-mode 1)
-  (setq recentf-max-menu-items 25)
-  (global-set-key (kbd "C-x C-r") 'recentf-open-files))
-(initialize-recentf)
-
 (use-package helpful
   :custom
   (counsel-describe-function-function #'helpful-callable)
@@ -284,24 +282,6 @@
   (avy-setup-default)
   :bind
   (("M-j" . avy-goto-char-timer)))
-
-;; languagetool:
-
-(use-package languagetool
-  :config
-  (setq languagetool-java-arguments '("-Dfile.encoding=UTF-8")
-	languagetool-console-command "~/languageTool/languagetool-commandline.jar"
-	languagetool-server-command "~/languageTool/languagetool-server.jar")
-  :commands (languagetoolkcheck
-             languagetool-clear-suggestions
-             languagetool-correct-at-point
-             languagetool-correct-buffer
-             languagetool-set-language
-             languagetool-server-mode
-             languagetool-server-start
-             languagetool-server-stop)
-  :bind
-  (("C-c d" . languagetool-correct-at-point)))
 
 (use-package jinx
   :defer 2
