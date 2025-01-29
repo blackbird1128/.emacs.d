@@ -48,19 +48,6 @@
         (message "File created: %s" filepath))
       (find-file filepath))))
 
-(use-package direnv
-  :straight t
-  :config
-  (direnv-mode))
-
-(defun opam-env ()
-  (interactive nil)
-  (dolist (var (car (read-from-string (shell-command-to-string "opam config env --sexp"))))
-    (setenv (car var) (cadr var))))
-
-(opam-env)
-(add-to-list 'exec-path (concat (getenv "OPAM_SWITCH_PREFIX") "/bin"))
-
 (straight-use-package 'org)
 
 (use-package no-littering
@@ -82,6 +69,7 @@
   (set-face-attribute  'fixed-pitch-serif nil  :font "IosevkaNerdFontMono" :height 140 :weight 'light :weight 'bold)
   
   (defalias 'yes-or-no-p 'y-or-n-p)
+  (setq dired-dwim-target t)
   
   (setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
   (setq delete-auto-save-files t)
@@ -103,9 +91,7 @@
   
   (recentf-mode 1)
   (setq recentf-max-menu-items 25)
-  (global-set-key (kbd "C-x C-r") 'recentf-open-files)
-  (initialize-recentf))
-
+  (global-set-key (kbd "C-x C-r") 'recentf-open-files))
 
 (defun remove-elc-when-visit ()
   "When visit, remove <filename>.elc"
@@ -177,9 +163,10 @@
 (use-package orderless
   :straight t
   :custom
-  (completion-styles '(substring orderless basic))
+  (completion-styles '(basic orderless))
   (completion-category-defaults nil)
-  (completion-category-overrides '((file (styles partial-completion)))))
+  (completion-category-overrides '((file (styles partial-completion))
+				   (command (styles flex )))))
 
 (use-package consult
   :straight t
@@ -189,6 +176,7 @@
          ("C-c h" . consult-history)
          ("C-c k" . consult-kmacro)
          ("C-c m" . consult-man)
+	 ("C-c g" . consult-ripgrep)
          ;("C-c i" . consult-info)
          ([remap Info-search] . consult-info)
          ;; C-x bindings in `ctl-x-map'
@@ -264,12 +252,35 @@
 
   :bind
   (:map corfu-map
-        ("TAB" . corfu-next)
         ([tab] . corfu-next)
         ("S-TAB" . corfu-previous)
+	
         ([backtab] . corfu-previous))
   :init
   (global-corfu-mode))
+
+(use-package cape
+  :straight t
+  ;; Bind prefix keymap providing all Cape commands under a mnemonic key.
+  ;; Press C-c p ? to for help.
+  :bind ("C-c p" . cape-prefix-map) ;; Alternative key: M-<tab>, M-p, M-+
+  :init
+  ;; Add to the global default value of `completion-at-point-functions' which is
+  ;; used by `completion-at-point'.  The order of the functions matters, the
+  ;; first function returning a result wins.  Note that the list of buffer-local
+  ;; completion functions takes precedence over the global list.
+  (add-hook 'completion-at-point-functions #'cape-file)
+
+  )
+
+(defun my-makefile-completion-setup ()
+  (setq-local completion-at-point-functions
+              (append (remove 'makefile-completions-at-point completion-at-point-functions)
+                      '(cape-file tags-completion-at-point-function makefile-completions-at-point))))
+
+(add-hook 'makefile-mode-hook #'my-makefile-completion-setup)
+
+
 
 (use-package corfu-popupinfo
   :ensure nil
@@ -292,7 +303,7 @@
 (use-package magit
   :straight t)
 
-;;;;;;;;;;;;;;;;;;;;; coq-setup
+;;;;;;;;;;;;;;;;;;;;; coq-setup ;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package proof-general
   :straight t
@@ -312,7 +323,21 @@
   :straight t
   :hook (coq-mode . company-coq-mode))
 
-;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;; ocaml setup ;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package direnv
+  :straight t
+  :config
+  (direnv-mode))
+
+(defun opam-env ()
+  (interactive nil)
+  (dolist (var (car (read-from-string (shell-command-to-string "opam config env --sexp"))))
+    (setenv (car var) (cadr var))))
+
+(opam-env)
+(add-to-list 'exec-path (concat (getenv "OPAM_SWITCH_PREFIX") "/bin"))
+
 
 (use-package tuareg
   :ensure t
@@ -451,6 +476,14 @@
               (bound-and-true-p org-cdlatex-mode))
           (cdlatex-tab)
         (yas-next-field-or-maybe-expand)))))
+;; Productivity stuff
+
+(use-package hammy
+  :defer 3)
+
+(use-package gptel
+  :defer 2
+  :straight t)
 
 ;; Org settings
 
