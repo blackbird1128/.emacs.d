@@ -20,6 +20,9 @@
                      (emacs-init-time "%.2f")
                      gcs-done)))
 
+(setq auth-sources
+    '((:source "~/.authinfo.gpg")))
+
 (setq native-comp-async-report-warnings-errors nil)
 (setq custom-file (concat user-emacs-directory "custom.el"))
 (when (file-exists-p custom-file)
@@ -80,6 +83,11 @@
   (column-number-mode)
   (global-display-line-numbers-mode t)
   (setq sentence-end-double-space nil)
+
+  (setq compilation-scroll-output t)
+  (setq compilation-max-output-line-length nil)
+  (setopt dictionary-server "dict.org")
+  (savehist-mode 1)
   
   (dolist (mode '(org-mode-hook
 	          term-mode-hook
@@ -174,13 +182,11 @@
   :bind (;; C-c bindings in `mode-specific-map'
          ("C-c M-x" . consult-mode-command)
          ("C-c h" . consult-history)
-         ("C-c k" . consult-kmacro)
          ("C-c m" . consult-man)
 	 ("C-c g" . consult-ripgrep)
          ;("C-c i" . consult-info)
          ([remap Info-search] . consult-info)
          ;; C-x bindings in `ctl-x-map'
-         ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
          ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
          ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
          ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
@@ -269,17 +275,20 @@
   ;; used by `completion-at-point'.  The order of the functions matters, the
   ;; first function returning a result wins.  Note that the list of buffer-local
   ;; completion functions takes precedence over the global list.
-  (add-hook 'completion-at-point-functions #'cape-file)
+  (add-hook 'completion-at-point-functions #'cape-file))
 
-  )
 
 (defun my-makefile-completion-setup ()
   (setq-local completion-at-point-functions
               (append (remove 'makefile-completions-at-point completion-at-point-functions)
                       '(cape-file tags-completion-at-point-function makefile-completions-at-point))))
 
-(add-hook 'makefile-mode-hook #'my-makefile-completion-setup)
+(defun org-completion-setup ()
+  (setq-local completion-at-point-functions
+              (append completion-at-point-functions '( 'cape-emoji))))
 
+(add-hook 'org-mode-hook #'org-completion-setup)
+(add-hook 'makefile-mode-hook #'my-makefile-completion-setup)
 
 
 (use-package corfu-popupinfo
