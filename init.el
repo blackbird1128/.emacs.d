@@ -21,7 +21,7 @@
                      gcs-done)))
 
 (setq auth-sources
-    '((:source "~/.authinfo.gpg")))
+    '((:source "~/.authinfo")))
 
 (setq native-comp-async-report-warnings-errors nil)
 (setq custom-file (concat user-emacs-directory "custom.el"))
@@ -66,10 +66,10 @@
   (read-extended-command-predicate #'command-completion-default-include-p)
   (tab-always-indent 'complete)
   :config
-  (set-face-attribute 'default nil :font "IosevkaNerdFontMono" :height 145)
-  (set-face-attribute 'fixed-pitch nil :font "IosevkaNerdFontMono" :height 145)
-  (set-face-attribute 'variable-pitch nil :font "IosevkaNerdFontPropo" :height 145 :weight 'regular)
-  (set-face-attribute  'fixed-pitch-serif nil  :font "IosevkaNerdFontMono" :height 140 :weight 'light :weight 'bold)
+  (set-face-attribute 'default nil :font "IosevkaNerdFontMono" :height 155)
+  (set-face-attribute 'fixed-pitch nil :font "IosevkaNerdFontMono" :height 155)
+  (set-face-attribute 'variable-pitch nil :font "IosevkaNerdFontPropo" :height 155 :weight 'regular)
+  (set-face-attribute  'fixed-pitch-serif nil  :font "IosevkaNerdFontMono" :height 150 :weight 'light :weight 'bold)
   
   (defalias 'yes-or-no-p 'y-or-n-p)
   (setq dired-dwim-target t)
@@ -83,6 +83,9 @@
   (column-number-mode)
   (global-display-line-numbers-mode t)
   (setq sentence-end-double-space nil)
+
+  (setq grep-command
+	"rg -n -H --no-heading -e '' $(git rev-parse --show-toplevel || pwd)")
 
   (setq compilation-scroll-output t)
   (setq compilation-max-output-line-length nil)
@@ -148,7 +151,6 @@
   ;; `completion-list-mode-map'.
   :bind (:map minibuffer-local-map
          ("M-A" . marginalia-cycle))
-  ;; The :init section is always executed.
   :init
   (marginalia-mode))
 
@@ -167,7 +169,6 @@
   ;; Tidy shadowed file names
   :hook (rfn-eshadow-update-overlay . vertico-directory-tidy))
 
-;; Optionally use the `orderless' completion style.
 (use-package orderless
   :straight t
   :custom
@@ -183,7 +184,7 @@
          ("C-c M-x" . consult-mode-command)
          ("C-c h" . consult-history)
          ("C-c m" . consult-man)
-	 ("C-c g" . consult-ripgrep)
+	 ("C-c s" . consult-ripgrep)
          ;("C-c i" . consult-info)
          ([remap Info-search] . consult-info)
          ;; C-x bindings in `ctl-x-map'
@@ -227,6 +228,8 @@
 (use-package embark-consult
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
+
+(use-package wgrep)
 
 (use-package which-key
   :init
@@ -310,6 +313,8 @@
          ("C-M-$" . jinx-languages)))
 
 (use-package magit
+  :bind
+  (("C-c g" . magit))
   :straight t)
 
 ;;;;;;;;;;;;;;;;;;;;; coq-setup ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -385,7 +390,6 @@
 (use-package pdf-tools
   :magic ("%PDF" . pdf-view-mode)
   :config
-
   (setq pdf-annot-color-history '("red" "yellow" "blue" "green"))
   (pdf-loader-install)
   (pdf-tools-install))
@@ -426,7 +430,6 @@
   :config
   (setq citar-bibliography '("~/org/phd/doctorat_aj.bib")))
 
-;; Yasnippet settings
 (use-package yasnippet
   :hook ((LaTeX-mode . yas-minor-mode)
          (post-self-insert . my/yas-try-expanding-auto-snippets))
@@ -488,6 +491,32 @@
 ;; Productivity stuff
 
 (use-package hammy
+  :straight t
+  :config
+  ;; We name the timer with the Unicode TOMATO character, and propertize
+;; it with a tomato-colored face.
+(hammy-define (propertize "🍅" 'face '(:foreground "tomato"))
+  :documentation "The classic pomodoro timer."
+  :intervals
+  (list
+   (interval :name "Work"
+             :duration "25 minutes"
+             :before (do (announce "Starting work time.")
+                         (notify "Starting work time."))
+             :advance (do (announce "Break time!")
+                          (notify "Break time!")))
+   (interval :name "Break"
+             :duration (do (if (and (not (zerop cycles))
+                                    (zerop (mod cycles 3)))
+                               ;; If a multiple of three cycles have
+                               ;; elapsed, the fourth work period was
+                               ;; just completed, so take a longer break.
+                               "30 minutes"
+                             "5 minutes"))
+             :before (do (announce "Starting break time.")
+                         (notify "Starting break time."))
+             :advance (do (announce "Break time is over!")
+                          (notify "Break time is over!")))))
   :defer 3)
 
 (use-package gptel
@@ -510,37 +539,33 @@
   :config
   (org-roam-setup))
 
-(defun efs/org-mode-setup ()
-  (setq visual-fill-column-width 140)
-  (setq visual-fill-column-mode 1)
-  (variable-pitch-mode 1)
-  (visual-line-mode 0)
-  (display-line-numbers-mode -1)
-  (setq left-margin-width 2)
-  (setq right-margin-width 2)
-  (setq header-line-format " ")
-  (setq org-hide-emphasis-markers t)
-  (setq org-pretty-entities t))
-
 (use-package org
-  :hook
-  (org-mode . efs/org-mode-setup)
-  :bind (
+   :bind (
 	 ("C-c a" . org-agenda)
 	 ("C-c c" . org-capture)
 	 ("C-c t" . org-set-tags-command)
 	 ("C-c b" . org-switchb))
   :config
-  (setq org-ellipsis "▾")
-  (setq org-agenda-files (directory-files-recursively "~/org/" "\\.org$"))
-  (setq org-timeblock-files org-agenda-files)
-  (setq org-agenda-skip-unavailable-files t)
-  (setq org-agenda-mouse-1-follows-link t)
-  (setq org-agenda-skip-scheduled-if-done t)
-  (setq org-agenda-skip-deadline-if-done t)
-  (setq org-log-done nil)
-  (setq org-log-into-drawer nil)
-  (setq line-spacing 0.2)
+  (setq visual-fill-column-width 140)
+  (setq visual-fill-column-mode 1)
+  (variable-pitch-mode 1)
+  (visual-line-mode 0)
+  (display-line-numbers-mode -1)
+  (setq left-margin-width 2
+      right-margin-width 2
+      header-line-format " "
+      org-hide-emphasis-markers t
+      org-pretty-entities t
+      org-ellipsis "▾"
+      org-agenda-files (directory-files-recursively "~/org/" "\\.org$")
+      org-timeblock-files org-agenda-files
+      org-agenda-skip-unavailable-files t
+      org-agenda-mouse-1-follows-link t
+      org-agenda-skip-scheduled-if-done t
+      org-agenda-skip-deadline-if-done t
+      org-log-done nil
+      org-log-into-drawer nil
+      line-spacing 0.2)
   (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
   (set-face-attribute 'org-code nil   :inherit '(shadow fixed-pitch))
   (set-face-attribute 'org-table nil   :inherit '(shadow fixed-pitch))
