@@ -70,34 +70,32 @@
   (set-face-attribute 'fixed-pitch nil :font "IosevkaNerdFontMono" :height 155)
   (set-face-attribute 'variable-pitch nil :font "IosevkaNerdFontPropo" :height 155 :weight 'regular)
   (set-face-attribute  'fixed-pitch-serif nil  :font "IosevkaNerdFontMono" :height 150 :weight 'light :weight 'bold)
-  
+
+  (add-hook 'compilation-filter-hook 'ansi-color-compilation-filter)
+
   (defalias 'yes-or-no-p 'y-or-n-p)
   (setq dired-dwim-target t)
+
+  (setq isearch-allow-scroll t       ; scrolling shouldn't cancel search
+      isearch-lazy-count t         ; display count of search results in minibuffer
+      )
   
   (setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
   (setq delete-auto-save-files t)
-  
+  (add-hook 'prog-mode-hook 'display-line-numbers-mode)
   (set-fringe-mode 10)
   (setq visual-fill-column-width 80)
   (setq visible-bell t)
-  (column-number-mode)
-  (global-display-line-numbers-mode t)
+  (column-number-mode t)
   (setq sentence-end-double-space nil)
 
   (setq grep-command
 	"rg -n -H --no-heading -e '' $(git rev-parse --show-toplevel || pwd)")
-
   (setq compilation-scroll-output t)
   (setq compilation-max-output-line-length nil)
   (setopt dictionary-server "dict.org")
   (savehist-mode 1)
   
-  (dolist (mode '(org-mode-hook
-	          term-mode-hook
-		  shell-mode-hook
-		  eshell-mode-hook
-		pdf-view-mode-hook))
-    (add-hook mode (lambda () (display-line-numbers-mode 0))))
   (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
   
   (recentf-mode 1)
@@ -208,8 +206,7 @@
    ;; :preview-key "M-."
    :preview-key '(:debounce 0.4 any))
 
-  (setq consult-narrow-key "<")
-)
+  (setq consult-narrow-key "<"))
 
 (use-package embark
   :bind
@@ -354,14 +351,16 @@
 
 
 (use-package tuareg
-  :ensure t
-  :mode (("\\.ocamlinit\\'" . tuareg-mode)))
+  :mode (("\\.ocamlinit\\'" . tuareg-mode))
+  :hook (tuareg-mode . display-line-numbers-mode)
+	  )
 
 (defun remove-highlight () (setq mouse-highlight nil))
 
 (use-package eglot
   :init
   (add-hook 'eglot-managed-mode-hook 'remove-highlight)
+  (add-hook 'eglot-managed-mode-hook 'display-line-numbers-mode)
   :bind
   (:map eglot-keymap
    ("r" . eglot-rename)                ;; Rename
@@ -374,7 +373,7 @@
   :config
   (define-prefix-command 'eglot-keymap)    ;; Define the prefix keymap
   (global-set-key (kbd "C-c l") 'eglot-keymap) ;; Bind C-c l to the prefix keymap
-  :hook ((tuareg-mode .  eglot-ensure ))
+  :hook ((tuareg-mode .  eglot-ensure ) (python-mode . eglot-ensure))
   :commands (eglot))
 
 (use-package opam-switch-mode
