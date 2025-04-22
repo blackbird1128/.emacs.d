@@ -525,20 +525,6 @@
 
 ;; Org settings
 
-(use-package org-roam
-  :straight t
-  :defer 2
-  :init
-  (setq org-roam-v2-ack t)
-  :custom
-  (org-roam-directory (file-truename "~/kb"))
-  :bind (("C-c n l" . org-roam-buffer-toggle)
-         ("C-c n f" . org-roam-node-find)
-         ("C-c n i" . org-roam-node-insert)
-         ("C-c n t" . org-roam-dailies-capture-today))
-  :config
-  (org-roam-setup))
-
 (use-package org
    :bind (
 	 ("C-c a" . org-agenda)
