@@ -386,6 +386,19 @@
   :custom (ocamlformat-enable 'enable-outside-detected-project)
   :hook (before-save . ocamlformat-before-save))
 
+;;;;;;;;;;;;;;;; python config ;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package poetry
+ :ensure t)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;; markdown config ;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package markdown-mode)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (use-package pdf-tools
   :magic ("%PDF" . pdf-view-mode)
   :config
@@ -493,29 +506,29 @@
   :straight t
   :config
   ;; We name the timer with the Unicode TOMATO character, and propertize
-;; it with a tomato-colored face.
-(hammy-define (propertize "🍅" 'face '(:foreground "tomato"))
-  :documentation "The classic pomodoro timer."
-  :intervals
-  (list
-   (interval :name "Work"
-             :duration "25 minutes"
-             :before (do (announce "Starting work time.")
-                         (notify "Starting work time."))
-             :advance (do (announce "Break time!")
-                          (notify "Break time!")))
-   (interval :name "Break"
-             :duration (do (if (and (not (zerop cycles))
-                                    (zerop (mod cycles 3)))
-                               ;; If a multiple of three cycles have
-                               ;; elapsed, the fourth work period was
-                               ;; just completed, so take a longer break.
-                               "30 minutes"
-                             "5 minutes"))
-             :before (do (announce "Starting break time.")
-                         (notify "Starting break time."))
-             :advance (do (announce "Break time is over!")
-                          (notify "Break time is over!")))))
+  ;; it with a tomato-colored face.
+  (hammy-define (propertize "🍅" 'face '(:foreground "tomato"))
+    :documentation "The classic pomodoro timer."
+    :intervals
+    (list
+     (interval :name "Work"
+               :duration "25 minutes"
+               :before (do (announce "Starting work time.")
+                           (notify "Starting work time."))
+               :advance (do (announce "Break time!")
+                            (notify "Break time!")))
+     (interval :name "Break"
+               :duration (do (if (and (not (zerop cycles))
+                                      (zerop (mod cycles 3)))
+				 ;; If a multiple of three cycles have
+				 ;; elapsed, the fourth work period was
+				 ;; just completed, so take a longer break.
+				 "30 minutes"
+                               "5 minutes"))
+               :before (do (announce "Starting break time.")
+                           (notify "Starting break time."))
+               :advance (do (announce "Break time is over!")
+                            (notify "Break time is over!")))))
   :defer 3)
 
 (use-package gptel
