@@ -60,6 +60,8 @@
   (setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
   (setq delete-auto-save-files t)
   (add-hook 'prog-mode-hook 'display-line-numbers-mode)
+  (setq org-use-sub-superscripts "{}")
+  
   (set-fringe-mode 10)
   (setq visual-fill-column-width 80)
   (setq visible-bell t)
