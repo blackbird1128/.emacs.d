@@ -21,35 +21,12 @@
                      gcs-done)))
 
 (setq auth-sources
-    '((:source "~/.authinfo")))
+      '((:source "~/.authinfo")))
 
 (setq native-comp-async-report-warnings-errors nil)
 (setq custom-file (concat user-emacs-directory "custom.el"))
 (when (file-exists-p custom-file)
   (load custom-file))
-
-(defun normalize-to-filename (input)
-  "Normalize a string INPUT into a filename-friendly format."
-  (let* ((normalized (downcase input)) ; Step 1: Convert to lowercase
-         (normalized (replace-regexp-in-string "\n" " " normalized)) ; Step 2: Replace newlines with spaces
-         (normalized (replace-regexp-in-string "[^[:alnum:][:space:]_]" "" normalized)) ; Step 3: Remove special characters
-         (normalized (replace-regexp-in-string "[[:space:]]+" "_" normalized)) ; Step 4: Replace spaces with underscores
-         (normalized (replace-regexp-in-string "^_+" "" normalized)) ; Step 5: Remove leading underscores
-         (normalized (replace-regexp-in-string "_+$" "" normalized))) ; Step 6: Remove trailing underscores
-    normalized))
-
-(defun create-file-with-normalized-filename ()
-  "Normalize a string or region into a filename and create a new file."
-  (interactive)
-  (let* ((input (if (use-region-p)
-                    (buffer-substring-no-properties (region-beginning) (region-end))
-                  (read-string "Enter string to normalize: ")))
-         (filename (normalize-to-filename input)))
-    (let ((filepath (read-file-name "Create file at directory: " nil nil nil filename)))
-      (unless (file-exists-p filepath)
-        (write-region "" nil filepath)
-        (message "File created: %s" filepath))
-      (find-file filepath))))
 
 (straight-use-package 'org)
 
@@ -100,23 +77,18 @@
   
   (recentf-mode 1)
   (setq recentf-max-menu-items 25)
-  (global-set-key (kbd "C-x C-r") 'recentf-open-files))
+  (global-set-key (kbd "C-x C-r") 'recentf-open-files)
 
-(defun remove-elc-when-visit ()
-  "When visit, remove <filename>.elc"
-  (make-local-variable 'find-file-hook)
-  (add-hook 'find-file-hook
-            (lambda ()
-              (if (file-exists-p (concat buffer-file-name "c"))
-                  (delete-file (concat buffer-file-name "c"))))))
-(add-hook 'emacs-lisp-mode-hook 'remove-elc-when-visit)
+  ;; Emacs 30 and newer: Disable Ispell completion function.
+  ;; Try `cape-dict' as an alternative.
+  (setopt text-mode-ispell-word-completion nil))
+
 
 (require 'package)
 
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
 (add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/"))
 (add-to-list 'package-archives '("elpa" . "https://elpa.gnu.org/packages/"))
-			
 
 (package-initialize)
 (unless package-archive-contents
@@ -142,13 +114,7 @@
 	doom-themes-enable-italic t) ; if nil, italics is universally disabled
   (load-theme 'doom-gruvbox t ))
 
-;; Enable rich annotations using the Marginalia package
 (use-package marginalia
-  ;; Bind `marginalia-cycle' locally in the minibuffer.  To make the binding
-  ;; available in the *Completions* buffer, add it to the
-  ;; `completion-list-mode-map'.
-  :bind (:map minibuffer-local-map
-         ("M-A" . marginalia-cycle))
   :init
   (marginalia-mode))
 
@@ -170,7 +136,7 @@
 (use-package orderless
   :straight t
   :custom
-  (completion-styles '(basic orderless))
+  (completion-styles '(basic flex))
   (completion-category-defaults nil)
   (completion-category-overrides '((file (styles partial-completion))
 				   (command (styles flex )))))
@@ -179,19 +145,14 @@
   :straight t
   ;; Replace bindings. Lazily loaded by `use-package'.
   :bind (;; C-c bindings in `mode-specific-map'
-         ("C-c M-x" . consult-mode-command)
-         ("C-c h" . consult-history)
          ("C-c m" . consult-man)
 	 ("C-c s" . consult-ripgrep)
          ;("C-c i" . consult-info)
          ([remap Info-search] . consult-info)
          ;; C-x bindings in `ctl-x-map'
          ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
-         ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
-         ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
          ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
-         ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
-	 )
+         ("C-x p b" . consult-project-buffer))      ;; orig. project-switch-to-buffer
   ;; Enable automatic preview at point in the *Completions* buffer. This is
   ;; relevant when you use the default completion UI.
   :hook (completion-list-mode . consult-preview-at-point-mode)
@@ -211,8 +172,7 @@
 (use-package embark
   :bind
   (("C-;" . embark-act)         ;; pick some comfortable binding
-   ("C-:" . embark-dwim)        ;; good alternative: M-.
-   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+   ("C-:" . embark-dwim) )       ;; good alternative: M-.
 
   :config
   ;; Hide the mode line of the Embark live/completions buffers
@@ -254,20 +214,18 @@
 	corfu-preselect 'directory
 	corfu-quit-no-match t
         corfu-auto-delay  0
-        corfu-auto-prefix 1)
+        corfu-auto-prefix 2)
 
   :bind
   (:map corfu-map
         ([tab] . corfu-next)
         ("S-TAB" . corfu-previous)
-	
         ([backtab] . corfu-previous))
   :init
   (global-corfu-mode))
 
 (use-package cape
   :straight t
-  ;; Bind prefix keymap providing all Cape commands under a mnemonic key.
   ;; Press C-c p ? to for help.
   :bind ("C-c p" . cape-prefix-map) ;; Alternative key: M-<tab>, M-p, M-+
   :init
@@ -277,19 +235,12 @@
   ;; completion functions takes precedence over the global list.
   (add-hook 'completion-at-point-functions #'cape-file))
 
-
 (defun my-makefile-completion-setup ()
   (setq-local completion-at-point-functions
               (append (remove 'makefile-completions-at-point completion-at-point-functions)
                       '(cape-file tags-completion-at-point-function makefile-completions-at-point))))
 
-(defun org-completion-setup ()
-  (setq-local completion-at-point-functions
-              (append completion-at-point-functions '( 'cape-emoji))))
-
-(add-hook 'org-mode-hook #'org-completion-setup)
 (add-hook 'makefile-mode-hook #'my-makefile-completion-setup)
-
 
 (use-package corfu-popupinfo
   :ensure nil
@@ -311,8 +262,7 @@
 
 (use-package magit
   :bind
-  (("C-c g" . magit))
-  :straight t)
+  (("C-c g" . magit)))
 
 ;;;;;;;;;;;;;;;;;;;;; coq-setup ;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -352,8 +302,7 @@
 
 (use-package tuareg
   :mode (("\\.ocamlinit\\'" . tuareg-mode))
-  :hook (tuareg-mode . display-line-numbers-mode)
-	  )
+  :hook (tuareg-mode . display-line-numbers-mode))
 
 (defun remove-highlight () (setq mouse-highlight nil))
 
@@ -402,7 +351,6 @@
 (use-package pdf-tools
   :magic ("%PDF" . pdf-view-mode)
   :config
-  (setq pdf-annot-color-history '("red" "yellow" "blue" "green"))
   (pdf-loader-install)
   (pdf-tools-install))
 
@@ -443,22 +391,7 @@
   (setq citar-bibliography '("~/org/phd/doctorat_aj.bib")))
 
 (use-package yasnippet
-  :hook ((LaTeX-mode . yas-minor-mode)
-         (post-self-insert . my/yas-try-expanding-auto-snippets))
-  :config
-  (use-package warnings
-    :config
-    (cl-pushnew '(yasnippet backquote-change)
-                warning-suppress-types
-                :test 'equal))
-  (setq yas-triggers-in-field t)
-  
-  ;; Function that tries to autoexpand YaSnippets
-  ;; The double quoting is NOT a typo!
-  (defun my/yas-try-expanding-auto-snippets ()
-    (when (and (boundp 'yas-minor-mode) yas-minor-mode)
-      (let ((yas-buffer-local-condition ''(require-snippet-condition . auto)))
-        (yas-expand)))))
+  :hook ((LaTeX-mode . yas-minor-mode)))
 
 ;; CDLatex integration with YaSnippet: Allow cdlatex tab to work inside Yas
 ;; fields
@@ -471,35 +404,7 @@
   (use-package yasnippet
     :bind (:map yas-keymap
 		("<tab>" . yas-next-field-or-cdlatex)
-		("TAB" . yas-next-field-or-cdlatex))
-    :config
-    (defun cdlatex-in-yas-field ()
-      ;; Check if we're at the end of the Yas field
-      (when-let* ((_ (overlayp yas--active-field-overlay))
-                  (end (overlay-end yas--active-field-overlay)))
-        (if (>= (point) end)
-            ;; Call yas-next-field if cdlatex can't expand here
-            (let ((s (thing-at-point 'sexp)))
-              (unless (and s (assoc (substring-no-properties s)
-                                    cdlatex-command-alist-comb))
-                (yas-next-field-or-maybe-expand)
-                t))
-          ;; otherwise expand and jump to the correct location
-          (let (cdlatex-tab-hook minp)
-            (setq minp
-                  (min (save-excursion (cdlatex-tab)
-                                       (point))
-                       (overlay-end yas--active-field-overlay)))
-            (goto-char minp) t))))
-    
-    (defun yas-next-field-or-cdlatex nil
-      (interactive)
-      "Jump to the next Yas field correctly with cdlatex active."
-      (if
-          (or (bound-and-true-p cdlatex-mode)
-              (bound-and-true-p org-cdlatex-mode))
-          (cdlatex-tab)
-        (yas-next-field-or-maybe-expand)))))
+		("TAB" . yas-next-field-or-cdlatex))))
 ;; Productivity stuff
 
 (use-package hammy
@@ -574,13 +479,6 @@
   (setq org-format-latex-options (plist-put org-format-latex-options :scale 1.5))
   (setq org-refile-targets '((org-agenda-files :maxlevel . 2)))
   (advice-add 'org-refile :after 'org-save-all-org-buffers)
-  (setq org-agenda-use-time-grid t)
-  (setq org-agenda-time-grid
-	'((daily today require-timed)
-	  (800 1000 1200 1400 1600 1800 2000)
-	  " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
-	org-agenda-current-time-string
-	"◀── now ─────────────────────────────────────────────────")
 
   (setq org-todo-keywords
 	'((sequence "NEXT(n)" "PROJ(p)"  "WAITING(w)" "TODO(t)" "|" "DONE(d)" "CANCELED(c)")
@@ -613,8 +511,6 @@
   
   (setq org-capture-templates
 	`(("t" "Tasks / Projects")
-	  ("tt" "Task" entry (file+headline "~/org/tasks.org" "Inbox")
-	   "* TODO %?\n  %u" )
 	  
 	  ("tp" "Painpoint" entry (file+headline "~/org/painpoint.org"  "Todo")
 	   "* TODO %?\n")
@@ -623,20 +519,11 @@
 	   "* %?\n")
 	  
 	  ("b" "Inbox" entry (file+headline, "~/org/inbox.org" "Inbox")
-	   "* %?\n")
-	  
-	  ("a" "Ask question" plain (file+headline, "~/org/questions.org" "Questions")
-	   "**** %?\n")      
+	   "* %?\n")	      
 	  
 	  ("l" "List of items")
 	  ("lb" "To buy" entry (file+olp, "~/org/buy_list.org" "Buy list")
-	   "*** %?\n")
-	  
-	  ("j" "Journal Entries")
-	  ("jj" "Journal" entry
-           (file+olp+datetree "~/org/journal.org")
-           "\n*** %<%I:%M %p> - Journal :journal:\n\n%?\n\n"
-           :empty-lines 1)
+	   "*** %?\n")	 
 	  
 	  ("m" "Metrics Capture")
 	  ("mm" "Mood" table-line (file+headline "~/org/metrics.org" "Mood")
@@ -658,18 +545,11 @@
     (interactive)
     (org-capture nil "b"))
   
-  (global-set-key "\C-ci" 'my/capture-inbox)
-  (global-set-key "\C-cw" 'dictionary-lookup-definition))
+  (global-set-key "\C-ci" 'my/capture-inbox))
 
 (use-package org-fragtog 
   :hook
   (org-mode . org-fragtog-mode))
-
-;(use-package calfw
-;  :commands (cfw:open-org-calendar)
-;  :config
-;  (require 'calfw)
-;  (use-package calfw-org))
 
 (with-eval-after-load 'org-faces
   (dolist (face '((org-level-1 . 1.50)
