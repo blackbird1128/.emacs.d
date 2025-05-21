@@ -105,6 +105,9 @@
 (setq use-package-always-ensure t)
 (setq use-package-enable-imenu-support t)
 
+(use-package eat
+  :hook ((eshell-mode . eat-eshell-mode)))
+
 (use-package try)
 
 (use-package rainbow-delimiters
@@ -146,7 +149,6 @@
 (use-package consult
   :straight t
   :bind (;; C-c bindings in `mode-specific-map'
-         ("C-c m" . consult-man)
 	 ("C-c s" . consult-ripgrep)
 	 ("C-c f" . consult-flymake)
          ;("C-c i" . consult-info)
