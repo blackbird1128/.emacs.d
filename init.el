@@ -138,17 +138,16 @@
 (use-package orderless
   :straight t
   :custom
-  (completion-styles '(basic flex))
+  (completion-styles '(orderless flex basic))
   (completion-category-defaults nil)
-  (completion-category-overrides '((file (styles partial-completion))
-				   (command (styles flex )))))
+  (completion-category-overrides '((file (styles partial-completion)))))
 
 (use-package consult
   :straight t
-  ;; Replace bindings. Lazily loaded by `use-package'.
   :bind (;; C-c bindings in `mode-specific-map'
          ("C-c m" . consult-man)
 	 ("C-c s" . consult-ripgrep)
+	 ("C-c f" . consult-flymake)
          ;("C-c i" . consult-info)
          ([remap Info-search] . consult-info)
          ;; C-x bindings in `ctl-x-map'
@@ -187,6 +186,9 @@
 (use-package embark-consult
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
+
+(use-package eat
+  :hook ((eshell-mode . eat-eshell-mode)))
 
 (use-package wgrep)
 
@@ -263,6 +265,7 @@
          ("C-M-$" . jinx-languages)))
 
 (use-package magit
+  :straight t
   :bind
   (("C-c g" . magit)))
 
@@ -346,7 +349,8 @@
 
 ;;;;;;;;;;;;;; markdown config ;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package markdown-mode)
+(use-package markdown-mode
+  :straight t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -356,28 +360,39 @@
   (pdf-loader-install)
   (pdf-tools-install))
 
+;;;;;;;;;;;;;;;;;;; Latex config ;;;;;;;;;;;;;;;;;;;;;
+
 (use-package visual-fill-column
   :hook (LaTeX-mode . visual-fill-column-mode))
 
+(use-package cdlatex
+  :ensure t
+  :hook (LaTeX-mode . turn-on-cdlatex)
+  :bind (:map cdlatex-mode-map 
+              ("<tab>" . cdlatex-tab)))
+
 (use-package latex
+  :ensure eglot
   :ensure auctex
-  :hook ((LaTeX-mode . prettify-symbols-mode))
-  :bind (:map LaTeX-mode-map
-              ("C-S-e" . latex-math-from-calc))
+  :hook ((LaTeX-mode . prettify-symbols-mode)
+	 (LaTeX-mode . eglot-ensure )
+	 (LaTeX-mode . turn-on-reftex)
+	 (LaTeX-mode . TeX-fold-mode)
+	 (LaTeX-mode . outline-minor-mode)
+	 )
   :config
   (setq +latex-viewers '(pdf-tools))
   (setq TeX-command-extra-options "--shell-escape")
-  (add-hook 'pdf-view-mode-hook 'windmove-display-right)
   (setq TeX-auto-save t)
   (setq TeX-parse-self t)
+  (setq reftex-plug-into-AUCTeX t)
+  (setq LaTeX-math-abbrev-prefix "²")
   (setq-default TeX-master nil)
   (add-hook 'LaTeX-mode-hook
             (lambda ()
               (setq lsp-tex-server 'digestiff)
               (put 'LaTeX-mode 'eglot-language-id "latex")
-              (eglot-ensure)))
-  
-  (add-hook 'LaTeX-mode-hook #'eglot-ensure)
+              ))
   (setq TeX-source-correlate-method "synctext")
   (setq TeX-source-correlate-start-server t)
   (setq TeX-source-correlate-mode 1)
@@ -395,47 +410,45 @@
 (use-package yasnippet
   :hook ((LaTeX-mode . yas-minor-mode)))
 
-;; CDLatex integration with YaSnippet: Allow cdlatex tab to work inside Yas
-;; fields
 (use-package cdlatex
   :hook ((cdlatex-tab . yas-expand)
-         (cdlatex-tab . cdlatex-in-yas-field)
-	 (LaTeX-mode . turn-on-cdlatex))
-  :bind (:map cdlatex-mode-map  ("<tab>" . cdlatex-tab))
+         (cdlatex-tab . cdlatex-in-yas-field))
   :config
   (use-package yasnippet
     :bind (:map yas-keymap
-		("<tab>" . yas-next-field-or-cdlatex)
-		("TAB" . yas-next-field-or-cdlatex))))
+           ("<tab>" . yas-next-field-or-cdlatex)
+           ("TAB" . yas-next-field-or-cdlatex))
+    :config
+    (defun cdlatex-in-yas-field ()
+      ;; Check if we're at the end of the Yas field
+      (when-let* ((_ (overlayp yas--active-field-overlay))
+                  (end (overlay-end yas--active-field-overlay)))
+        (if (>= (point) end)
+            ;; Call yas-next-field if cdlatex can't expand here
+            (let ((s (thing-at-point 'sexp)))
+              (unless (and s (assoc (substring-no-properties s)
+                                    cdlatex-command-alist-comb))
+                (yas-next-field-or-maybe-expand)
+                t))
+          ;; otherwise expand and jump to the correct location
+          (let (cdlatex-tab-hook minp)
+            (setq minp
+                  (min (save-excursion (cdlatex-tab)
+                                       (point))
+                       (overlay-end yas--active-field-overlay)))
+            (goto-char minp) t))))
+
+    (defun yas-next-field-or-cdlatex nil
+      (interactive)
+      "Jump to the next Yas field correctly with cdlatex active."
+      (if
+          (or (bound-and-true-p cdlatex-mode)
+              (bound-and-true-p org-cdlatex-mode))
+          (cdlatex-tab)
+        (yas-next-field-or-maybe-expand)))))
 ;; Productivity stuff
 
 (use-package hammy
-  :straight t
-  :config
-  ;; We name the timer with the Unicode TOMATO character, and propertize
-  ;; it with a tomato-colored face.
-  (hammy-define (propertize "🍅" 'face '(:foreground "tomato"))
-    :documentation "The classic pomodoro timer."
-    :intervals
-    (list
-     (interval :name "Work"
-               :duration "25 minutes"
-               :before (do (announce "Starting work time.")
-                           (notify "Starting work time."))
-               :advance (do (announce "Break time!")
-                            (notify "Break time!")))
-     (interval :name "Break"
-               :duration (do (if (and (not (zerop cycles))
-                                      (zerop (mod cycles 3)))
-				 ;; If a multiple of three cycles have
-				 ;; elapsed, the fourth work period was
-				 ;; just completed, so take a longer break.
-				 "30 minutes"
-                               "5 minutes"))
-               :before (do (announce "Starting break time.")
-                           (notify "Starting break time."))
-               :advance (do (announce "Break time is over!")
-                            (notify "Break time is over!")))))
   :defer 3)
 
 (use-package gptel
