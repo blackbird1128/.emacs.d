@@ -29,6 +29,7 @@
   (load custom-file))
 
 (straight-use-package 'org)
+(require 'transient)
 
 (use-package no-littering
   :straight t
@@ -356,9 +357,29 @@
 
 (use-package pdf-tools
   :magic ("%PDF" . pdf-view-mode)
+
   :config
+  (defun my/pdf-annot-highlight (color)
+    "Highlight the active region in COLOR"
+    (let ((edges (pdf-view-active-region t)))
+      (unless edges
+	(user-error "No active region to highlight"))
+      (pdf-annot-add-highlight-markup-annotation
+       edges color )))
+
+  (transient-define-prefix my/pdf-highlight-transient ()
+    "PDF Highlight Menu"
+    [["Highlight Types"
+      ("s" "Syntaxic errors (blue)"   (lambda () (interactive)
+					(my/pdf-annot-highlight "CadetBlue1")))
+      ("m" "Semantic errors (green)"  (lambda () (interactive)
+					(my/pdf-annot-highlight "yellow green" )))
+      ("l" "Loved part (pink)"        (lambda () (interactive)
+					(my/pdf-annot-highlight "plum1" )))]])  
   (pdf-loader-install)
-  (pdf-tools-install))
+  (pdf-tools-install)
+  :bind (:map pdf-view-mode-map ("h" . my/pdf-highlight-transient))
+  )
 
 ;;;;;;;;;;;;;;;;;;; Latex config ;;;;;;;;;;;;;;;;;;;;;
 
