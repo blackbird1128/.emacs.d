@@ -476,6 +476,36 @@
   :defer 2
   :straight t)
 
+
+;;;;;;;;;;;; howm ;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package howm
+  :straight t
+  :hook ((org-mode . howm-mode))
+  :init
+  
+  (require 'howm-org) ;; Write notes in Org-mode. (*2)
+  ;; 
+  ;; Preferences
+  (setq howm-directory "~/org/") ;; Where to store the files?
+  (setq howm-follow-theme t) ;; Use your Emacs theme colors. (*3)
+
+  
+  (setq howm-view-use-grep t)
+  (setq howm-view-grep-command "rg")
+  (setq howm-view-grep-option "-nH --no-heading --color never")
+  (setq howm-view-grep-extended-option nil)
+  (setq howm-view-grep-fixed-option "-F")
+  (setq howm-view-grep-expr-option nil)
+  (setq howm-view-grep-file-stdin-option nil)
+
+    ;; Default recent to sorting by mtime
+  (advice-add 'howm-list-recent :after #'howm-view-sort-by-mtime)
+  ;; Default all to sorting by creation, newest first
+  (advice-add 'howm-list-all :after #'(lambda () (howm-view-sort-by-date t)))
+
+)
+
 ;; Org settings
 
 (use-package org
