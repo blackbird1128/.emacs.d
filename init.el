@@ -330,6 +330,7 @@
   :config
   (define-prefix-command 'eglot-keymap)    ;; Define the prefix keymap
   (global-set-key (kbd "C-c l") 'eglot-keymap) ;; Bind C-c l to the prefix keymap
+  (advice-add #'eglot-completion-at-point :around #'cape-wrap-buster)
   :hook ((tuareg-mode .  eglot-ensure ) (python-mode . eglot-ensure))
   :commands (eglot))
 
@@ -409,7 +410,6 @@
   (setq TeX-auto-save t)
   (setq TeX-parse-self t)
   (setq reftex-plug-into-AUCTeX t)
-  (setq LaTeX-math-abbrev-prefix "²")
   (setq-default TeX-master nil)
   (add-hook 'LaTeX-mode-hook
             (lambda ()
