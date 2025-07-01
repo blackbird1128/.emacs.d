@@ -50,9 +50,11 @@
   (set-face-attribute  'fixed-pitch-serif nil  :font "IosevkaNerdFontMono" :height 150 :weight 'light :weight 'bold)
 
   (add-hook 'compilation-filter-hook 'ansi-color-compilation-filter)
+  (blink-cursor-mode 0)
 
   (defalias 'yes-or-no-p 'y-or-n-p)
   (setq dired-dwim-target t)
+  
 
   (setq isearch-allow-scroll t       ; scrolling shouldn't cancel search
       isearch-lazy-count t         ; display count of search results in minibuffer
@@ -61,7 +63,7 @@
   (setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
   (setq delete-auto-save-files t)
   (add-hook 'prog-mode-hook 'display-line-numbers-mode)
-  (setq org-use-sub-superscripts "{}")
+
   
   (set-fringe-mode 10)
   (setq visual-fill-column-width 80)
@@ -516,18 +518,52 @@
 	 ("C-c c" . org-capture)
 	 ("C-c t" . org-set-tags-command)
 	 ("C-c b" . org-switchb))
-  :config
-  (setq visual-fill-column-width 140)
-  (setq visual-fill-column-mode 1)
+   :hook ((org-mode . visual-line-mode)
+	  (org-mode . variable-pitch-mode)
+	  )
+   :config
+
+  (let* ((variable-tuple
+          (cond ((x-list-fonts "IosevkaAile")         '(:font "IosevkaAile"))
+                ((x-family-fonts "Sans Serif")    '(:family "Sans Serif"))
+                (nil (warn "Cannot find a Sans Serif Font.  Install Source Sans Pro."))))
+         (headline  `(:weight semi-bold ))
+	 (fg (doom-color 'fg))
+	 (yellow (doom-color 'yellow))
+	 (green (doom-color 'green))
+	 (violet (doom-color 'violet))
+	 )
+
+  (custom-theme-set-faces
+   'user
+   `(org-default ((t (,@variable-tuple))))
+   `(variable-pitch ((t (,@variable-tuple :height 170  ))))
+   `(fixed-pitch ((t (,:font "IosevkaNerdFontMono" :height 170))))
+   `(org-level-8 ((t (,@headline ,@variable-tuple ))))
+   `(org-level-7 ((t (,@headline ,@variable-tuple))))
+   `(org-level-6 ((t (,@headline ,@variable-tuple))))
+   `(org-level-5 ((t (,@headline ,@variable-tuple))))
+   `(org-level-4 ((t (,@headline ,@variable-tuple :height 1.10))))
+   `(org-level-3 ((t (,@headline ,@variable-tuple :height 1.20  :foreground ,violet))))
+   `(org-level-2 ((t (,@headline ,@variable-tuple :height 1.50 :foreground ,green))))
+   `(org-level-1 ((t (,@headline ,@variable-tuple :height 1.60 :foreground ,yellow))))
+   `(org-document-title ((t (,@headline ,@variable-tuple :height 1.20 :underline nil))))
+
+   `(org-table  ((t (:inherit ( fixed-pitch) :foreground ,fg   ))))
+   `(org-checkbox ((t (:foreground ,fg))))
+
+   
+     ))
+
+   
+  (setq org-use-sub-superscripts "{}") 
   (variable-pitch-mode 1)
-  (visual-line-mode 0)
   (display-line-numbers-mode -1)
   (setq left-margin-width 2
       right-margin-width 2
       header-line-format " "
       org-hide-emphasis-markers t
       org-pretty-entities t
-      org-ellipsis "▾"
       org-agenda-files (directory-files-recursively "~/org/" "\\.org$")
       org-timeblock-files org-agenda-files
       org-agenda-skip-unavailable-files t
@@ -539,12 +575,11 @@
       line-spacing 0.2)
   (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
   (set-face-attribute 'org-code nil   :inherit '(shadow fixed-pitch))
-  (set-face-attribute 'org-table nil   :inherit '(shadow fixed-pitch))
   (set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
   (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
-  (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
-  (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch)
-  (setq org-format-latex-options (plist-put org-format-latex-options :scale 1.5))
+  (set-face-attribute 'org-link nil :weight 'bold :underline t :inherit 'fixed-pitch)
+  ;; (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
+
   (setq org-refile-targets '((org-agenda-files :maxlevel . 2)))
   (advice-add 'org-refile :after 'org-save-all-org-buffers)
 
@@ -619,21 +654,12 @@
   :hook
   (org-mode . org-fragtog-mode))
 
-(with-eval-after-load 'org-faces
-  (dolist (face '((org-level-1 . 1.50)
-                  (org-level-2 . 1.30)
-                  (org-level-3 . 1.10)
-                  (org-level-4 . 1.05)
-                  (org-level-5 . 1.05)
-                  (org-level-6 . 1.05)
-                  (org-level-7 . 1.05)
-                  (org-level-8 . 1.05)))
-    (set-face-attribute (car face) nil :font "IosevkaNerdFontPropo" :weight 'regular :height (cdr face))))
 
 (use-package org-modern
   :mode ("\\.org\\'" . org-mode)
   :config (setq org-hide-emphasis-markers t)
-  (setq org-modern-star 'replace)
+  (setq org-modern-star 'replace
+	org-modern-replace-stars "◉○")
   
   :hook (org-mode . global-org-modern-mode))
 
