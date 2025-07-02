@@ -407,22 +407,28 @@
 	 (LaTeX-mode . outline-minor-mode)
 	 )
   :config
-  (setq +latex-viewers '(pdf-tools))
-  (setq TeX-command-extra-options "--shell-escape")
-  (setq TeX-auto-save t)
-  (setq TeX-parse-self t)
-  (setq reftex-plug-into-AUCTeX t)
-  (setq-default TeX-master nil)
   (add-hook 'LaTeX-mode-hook
             (lambda ()
               (setq lsp-tex-server 'digestiff)
               (put 'LaTeX-mode 'eglot-language-id "latex")
               ))
-  (setq TeX-source-correlate-method "synctext")
-  (setq TeX-source-correlate-start-server t)
-  (setq TeX-source-correlate-mode 1)
+
   (add-hook 'TeX-after-compilation-finished-functions
-            #'TeX-revert-document-buffer))
+            #'TeX-revert-document-buffer)
+
+  
+  (setq +latex-viewers '(pdf-tools)
+	TeX-command-extra-options "--shell-escape"
+	TeX-auto-save t
+	TeX-parse-self t
+	reftex-plug-into-AUCTeX t
+	LaTeX-math-abbrev-prefix "²"
+	default TeX-master nil
+	
+	TeX-source-correlate-method "synctext"
+	TeX-source-correlate-start-server t
+	TeX-source-correlate-mode 1))
+
 
 (use-package citar
   :straight t
@@ -491,17 +497,15 @@
   (require 'howm-org) ;; Write notes in Org-mode. (*2)
   ;; 
   ;; Preferences
-  (setq howm-directory "~/org/") ;; Where to store the files?
-  (setq howm-follow-theme t) ;; Use your Emacs theme colors. (*3)
-
-  
-  (setq howm-view-use-grep t)
-  (setq howm-view-grep-command "rg")
-  (setq howm-view-grep-option "-nH --no-heading --color never")
-  (setq howm-view-grep-extended-option nil)
-  (setq howm-view-grep-fixed-option "-F")
-  (setq howm-view-grep-expr-option nil)
-  (setq howm-view-grep-file-stdin-option nil)
+  (setq howm-directory "~/org/" ;; Where to store the files?
+	howm-follow-theme t ;; Use your Emacs theme colors. (*3)
+	howm-view-use-grep t
+	howm-view-grep-command "rg"
+	howm-view-grep-option "-nH --no-heading --color never"
+	howm-view-grep-extended-option nil
+	howm-view-grep-fixed-option "-F"
+	howm-view-grep-expr-option nil
+	howm-view-grep-file-stdin-option nil)
 
     ;; Default recent to sorting by mtime
   (advice-add 'howm-list-recent :after #'howm-view-sort-by-mtime)
@@ -531,8 +535,7 @@
 	 (fg (doom-color 'fg))
 	 (yellow (doom-color 'yellow))
 	 (green (doom-color 'green))
-	 (violet (doom-color 'violet))
-	 )
+	 (violet (doom-color 'violet)))
 
   (custom-theme-set-faces
    'user
@@ -549,16 +552,21 @@
    `(org-level-1 ((t (,@headline ,@variable-tuple :height 1.60 :foreground ,yellow))))
    `(org-document-title ((t (,@headline ,@variable-tuple :height 1.20 :underline nil))))
 
-   `(org-table  ((t (:inherit ( fixed-pitch) :foreground ,fg   ))))
+   `(org-table    ((t (:inherit ( fixed-pitch) :foreground ,fg   ))))
    `(org-checkbox ((t (:foreground ,fg))))
+   `(org-block    (( t :foreground nil :inherit fixed-pitch)))
+   `(org-code     ((t :inherit (shadow fixed-pitch))))
+   `(org-verbatim ((t :inherit (shadow fixed-pitch))))
+   `(org-special-keyword ((t :inherit (font-lock-comment-face fixed-pitch))))
+   `(org-link ((t :weight bold :underline t :inherit fixed-pitch)))
 
-   
-     ))
+   )
 
-   
-  (setq org-use-sub-superscripts "{}") 
+  )
+
   (variable-pitch-mode 1)
   (display-line-numbers-mode -1)
+
   (setq left-margin-width 2
       right-margin-width 2
       header-line-format " "
@@ -572,15 +580,14 @@
       org-agenda-skip-deadline-if-done t
       org-log-done nil
       org-log-into-drawer nil
-      line-spacing 0.2)
-  (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
-  (set-face-attribute 'org-code nil   :inherit '(shadow fixed-pitch))
-  (set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
-  (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
-  (set-face-attribute 'org-link nil :weight 'bold :underline t :inherit 'fixed-pitch)
+      line-spacing 0.2
+      org-return-follows-link t
+      org-use-sub-superscripts "{}"
+      org-refile-targets '((org-agenda-files :maxlevel . 2))
+      )
+
   ;; (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
 
-  (setq org-refile-targets '((org-agenda-files :maxlevel . 2)))
   (advice-add 'org-refile :after 'org-save-all-org-buffers)
 
   (setq org-todo-keywords
@@ -633,7 +640,9 @@
 	   "| %U | %^{Mood rating (1-10)|1|2|3|4|5|6|7|8|9|10} | %^{Notes} |" :kill-buffer t)))
   ;; -------- ORG BABEL ------------
   
-  (setq org-babel-python-command "python3")
+  (setq org-babel-python-command "python3"
+    org-confirm-babel-evaluate nil)
+
   
   (org-babel-do-load-languages
    'org-babel-load-languages
@@ -642,7 +651,6 @@
      (dot . t)
      (shell . t)))
   
-  (setq org-confirm-babel-evaluate nil)
 
   (defun my/capture-inbox()
     (interactive)
@@ -653,6 +661,13 @@
 (use-package org-fragtog 
   :hook
   (org-mode . org-fragtog-mode))
+
+(use-package visual-fill-column
+  :hook (org-mode . my/org-mode-visual-fill)
+  :config
+  (defun my/org-mode-visual-fill ()
+    (setq visual-fill-column-width 100)
+    (visual-fill-column-mode 1) ) )
 
 
 (use-package org-modern
