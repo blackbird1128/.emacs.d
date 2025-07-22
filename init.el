@@ -332,7 +332,7 @@
   :config
   (define-prefix-command 'eglot-keymap)    ;; Define the prefix keymap
   (global-set-key (kbd "C-c l") 'eglot-keymap) ;; Bind C-c l to the prefix keymap
-  (advice-add #'eglot-completion-at-point :around #'cape-wrap-buster)
+  ;; (advice-add #'eglot-completion-at-point :around #'cape-wrap-buster)
   :hook ((tuareg-mode .  eglot-ensure ) (python-mode . eglot-ensure))
   :commands (eglot))
 
@@ -422,12 +422,11 @@
 	TeX-auto-save t
 	TeX-parse-self t
 	reftex-plug-into-AUCTeX t
-	LaTeX-math-abbrev-prefix "²"
-	default TeX-master nil
-	
+	default-TeX-master nil
 	TeX-source-correlate-method "synctext"
 	TeX-source-correlate-start-server t
-	TeX-source-correlate-mode 1))
+	TeX-source-correlate-mode 1)
+)
 
 
 (use-package citar
@@ -477,6 +476,14 @@
               (bound-and-true-p org-cdlatex-mode))
           (cdlatex-tab)
         (yas-next-field-or-maybe-expand)))))
+
+;;;;;;;;;;;;;;;; writing ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+
+
+
 ;; Productivity stuff
 
 (use-package hammy
@@ -559,10 +566,7 @@
    `(org-verbatim ((t :inherit (shadow fixed-pitch))))
    `(org-special-keyword ((t :inherit (font-lock-comment-face fixed-pitch))))
    `(org-link ((t :weight bold :underline t :inherit fixed-pitch)))
-
-   )
-
-  )
+   ))
 
   (variable-pitch-mode 1)
   (display-line-numbers-mode -1)
@@ -682,3 +686,15 @@
   :hook (org-mode . org-appear-mode))
 
 ;; -------------------- Org config end --------------------
+
+(use-package elfeed
+  :custom
+    (elfeed-db-directory
+     (expand-file-name "elfeed" user-emacs-directory))
+    (elfeed-show-entry t)
+  :bind (("C-c e" . elfeed))
+  :config
+  (setq elfeed-feeds
+      '("http://nullprogram.com/feed/"
+        "https://planet.emacslife.com/atom.xml"))
+  )
