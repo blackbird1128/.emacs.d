@@ -23,6 +23,13 @@
 (setq auth-sources
       '((:source "~/.authinfo")))
 
+(defun my/get-api-key (host user)
+  "Get API key from .authinfo for HOST and USER."
+  (let ((entry (car (auth-source-search :host host :user user :require '(:secret)))))
+    (when entry
+      (let ((secret (plist-get entry :secret)))
+        (if (functionp secret) (funcall secret) secret)))))
+
 (setq native-comp-async-report-warnings-errors nil)
 (setq custom-file (concat user-emacs-directory "custom.el"))
 (when (file-exists-p custom-file)
@@ -40,6 +47,7 @@
   :demand
   :bind (( "C-x C-b" . switch-to-buffer))
   :custom
+  (setq auto-mode-alist (remove (rassoc 'verilog-mode auto-mode-alist) auto-mode-alist))
   (enable-recursive-minibuffers t)
   (read-extended-command-predicate #'command-completion-default-include-p)
   (tab-always-indent 'complete)
@@ -51,30 +59,32 @@
 
   (add-hook 'compilation-filter-hook 'ansi-color-compilation-filter)
   (blink-cursor-mode 0)
-
+  (column-number-mode t)
   (defalias 'yes-or-no-p 'y-or-n-p)
   (setq dired-dwim-target t)
   
 
   (setq isearch-allow-scroll t       ; scrolling shouldn't cancel search
-      isearch-lazy-count t         ; display count of search results in minibuffer
+        isearch-lazy-count t         ; display count of search results in minibuffer
       )
   
   (setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
-  (setq delete-auto-save-files t)
   (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
   
   (set-fringe-mode 10)
-  (setq visual-fill-column-width 80)
-  (setq visible-bell t)
-  (column-number-mode t)
-  (setq sentence-end-double-space nil)
+  (setq
+        delete-auto-save-files t
+        visual-fill-column-width 80
+        visible-bell t
+	sentence-end-double-space nil
+	
+        grep-command "rg -n -H --no-heading -e '' $(git rev-parse --show-toplevel || pwd)"
+	compilation-scroll-output t
+	compilation-max-output-line-length nil
+	)
 
-  (setq grep-command
-	"rg -n -H --no-heading -e '' $(git rev-parse --show-toplevel || pwd)")
-  (setq compilation-scroll-output t)
-  (setq compilation-max-output-line-length nil)
+
   (setopt dictionary-server "dict.org")
   (savehist-mode 1)
   
@@ -86,8 +96,9 @@
 
   ;; Emacs 30 and newer: Disable Ispell completion function.
   ;; Try `cape-dict' as an alternative.
-  (setopt text-mode-ispell-word-completion nil))
+  (setopt text-mode-ispell-word-completion nil)
 
+  )
 
 (require 'package)
 
@@ -106,6 +117,32 @@
 (require 'use-package)
 (setq use-package-always-ensure t)
 (setq use-package-enable-imenu-support t)
+
+(defun my/chicken-icon (_1 _2 _3)
+  (propertize "🐔"
+              'face '(:family "IosevkaNerdFontMono" :height 1.0)))
+
+(use-package nerd-icons
+  :straight t
+  :config
+  (setq nerd-icons-extension-icon-alist
+	(assoc-delete-all "v" nerd-icons-extension-icon-alist))
+  (setq nerd-icons-extension-icon-alist
+      (append
+       `(("v"
+          ,#'my/chicken-icon
+          "🐔" :face nerd-icons-yellow )) ;; This face might be ignored
+       nerd-icons-extension-icon-alist))
+  )
+
+(use-package doom-modeline
+  :straight t
+  :ensure t
+  :init
+  (doom-modeline-mode 1)
+  :config
+  (setq mode-line-right-align-edge 'right-fringe)
+  )
 
 (use-package eat
   :hook ((eshell-mode . eat-eshell-mode)))
@@ -195,9 +232,11 @@
 (use-package eat
   :hook ((eshell-mode . eat-eshell-mode)))
 
-(use-package wgrep)
+(use-package wgrep
+  :defer 5)
 
 (use-package which-key
+  :diminish
   :init
   (which-key-mode)
   :config
@@ -222,6 +261,7 @@
 	corfu-cycle t
 	corfu-preselect 'directory
 	corfu-quit-no-match t
+	corfu-on-exact-match nil
         corfu-auto-delay  0
         corfu-auto-prefix 2)
 
@@ -257,6 +297,18 @@
   (corfu-popupinfo-mode)
   (setq corfu-popupinfo-delay 0.5))
 
+(use-package yasnippet-snippets
+  :straight t)
+
+(use-package yasnippet
+  :hook (tuareg-mode . yas-minor-mode)
+  :config
+  ( push (expand-file-name "~/.config/emacs/snippets/") yas-snippet-dirs )
+  (yas-reload-all))
+
+(use-package yasnippet-capf
+  :straight t)
+
 (use-package avy
   :config
   (avy-setup-default)
@@ -265,6 +317,7 @@
 
 (use-package jinx
   :defer 2
+  :diminish
   :hook (emacs-startup . global-jinx-mode)
   :bind (("M-$" . jinx-correct)
          ("C-M-$" . jinx-languages)))
@@ -284,15 +337,31 @@
 	proof-splash-enable nil
 	proof-next-command-insert-space nil
 	proof-electric-terminator-enable nil
-	PA-one-command-per-line nil))
+	PA-one-command-per-line nil)
+
+  (diminish 'company-mode)
+  (diminish 'holes-mode)
+  (diminish 'outline-minor-mode) )
 
 (custom-set-faces
  '(proof-locked-face ((t (:background "#3c3836")))))
 
 
 (use-package company-coq
+  :diminish (" 🐤")
   :straight t
   :hook (coq-mode . company-coq-mode))
+
+;;;;;;;;;;;;;;;;; why3 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(use-package why3
+  :load-path "lisp"
+  :mode ("\\.mlw\\'" . why3-mode)
+  :bind (:map why3-mode-map
+	      ("C-c C-c" . compile))
+)
+
 
 ;;;;;;;;;;;;;;;;;; ocaml setup ;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -314,12 +383,21 @@
   :mode (("\\.ocamlinit\\'" . tuareg-mode))
   :hook (tuareg-mode . display-line-numbers-mode))
 
+
 (defun remove-highlight () (setq mouse-highlight nil))
+
+(defun my/eglot-capf ()
+  (setq-local completion-at-point-functions
+              (list (cape-capf-super
+                     #'eglot-completion-at-point
+		     #'cape-file
+                     #'yasnippet-capf))))
 
 (use-package eglot
   :init
   (add-hook 'eglot-managed-mode-hook 'remove-highlight)
   (add-hook 'eglot-managed-mode-hook 'display-line-numbers-mode)
+  (add-hook 'eglot-managed-mode-hook #'my/eglot-capf)
   :bind
   (:map eglot-keymap
    ("r" . eglot-rename)                ;; Rename
@@ -332,12 +410,17 @@
   :config
   (define-prefix-command 'eglot-keymap)    ;; Define the prefix keymap
   (global-set-key (kbd "C-c l") 'eglot-keymap) ;; Bind C-c l to the prefix keymap
+  (add-to-list 'eglot-server-programs
+             '(why3-mode . ("why3find" "lsp" "--port" :autoport)))
+
+
   ;; (advice-add #'eglot-completion-at-point :around #'cape-wrap-buster)
-  :hook ((tuareg-mode .  eglot-ensure ) (python-mode . eglot-ensure))
+  :hook ((tuareg-mode .  eglot-ensure ) (python-mode . eglot-ensure) (why3-mode . eglot-ensure))
   :commands (eglot))
 
 (use-package opam-switch-mode
   :ensure t
+  :diminish ("OSW")
   :hook
   ((coq-mode tuareg-mode) . opam-switch-mode))
 
@@ -392,12 +475,14 @@
   :hook (LaTeX-mode . visual-fill-column-mode))
 
 (use-package cdlatex
+  :diminish
   :ensure t
   :hook (LaTeX-mode . turn-on-cdlatex)
   :bind (:map cdlatex-mode-map 
               ("<tab>" . cdlatex-tab)))
 
 (use-package latex
+  :diminish ("LaTeX" . "")
   :ensure eglot
   :ensure auctex
   :hook ((LaTeX-mode . prettify-symbols-mode)
@@ -407,9 +492,10 @@
 	 (LaTeX-mode . outline-minor-mode)
 	 )
   :config
+  (diminish 'outline-minor-mode "")
   (add-hook 'LaTeX-mode-hook
             (lambda ()
-              (setq lsp-tex-server 'digestiff)
+              (setq lsp-tex-server 'digestif)
               (put 'LaTeX-mode 'eglot-language-id "latex")
               ))
 
@@ -437,11 +523,8 @@
   :config
   (setq citar-bibliography '("~/org/phd/doctorat_aj.bib")))
 
-(use-package yasnippet
-  :hook ((LaTeX-mode . yas-minor-mode)))
-
 (use-package cdlatex
-  :hook ((cdlatex-tab . yas-expand)
+    :hook ((cdlatex-tab . yas-expand)
          (cdlatex-tab . cdlatex-in-yas-field))
   :config
   (use-package yasnippet
@@ -475,12 +558,10 @@
           (or (bound-and-true-p cdlatex-mode)
               (bound-and-true-p org-cdlatex-mode))
           (cdlatex-tab)
-        (yas-next-field-or-maybe-expand)))))
+        (yas-next-field-or-maybe-expand))))
+)
 
 ;;;;;;;;;;;;;;;; writing ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-
 
 
 
@@ -490,18 +571,24 @@
   :defer 3)
 
 (use-package gptel
-  :defer 2
-  :straight t)
+  :defer 5
+  :straight t
+  :config
+  (gptel-make-gemini "Gemini" :key (my/get-api-key "generativelanguage.googleapis.com" "apikey") :stream t)
+  )
 
 
 ;;;;;;;;;;;; howm ;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package howm
+  :diminish
   :straight t
   :hook ((org-mode . howm-mode))
   :init
   
   (require 'howm-org) ;; Write notes in Org-mode. (*2)
+  (setq howm-create-id t)
+
   ;; 
   ;; Preferences
   (setq howm-directory "~/org/" ;; Where to store the files?
@@ -587,8 +674,7 @@
       line-spacing 0.2
       org-return-follows-link t
       org-use-sub-superscripts "{}"
-      org-refile-targets '((org-agenda-files :maxlevel . 2))
-      )
+      org-refile-targets '((org-agenda-files :maxlevel . 2)))
 
   ;; (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
 
@@ -678,8 +764,7 @@
   :mode ("\\.org\\'" . org-mode)
   :config (setq org-hide-emphasis-markers t)
   (setq org-modern-star 'replace
-	org-modern-replace-stars "◉○")
-  
+	org-modern-replace-stars "◉○")  
   :hook (org-mode . global-org-modern-mode))
 
 (use-package org-appear
@@ -696,5 +781,5 @@
   :config
   (setq elfeed-feeds
       '("http://nullprogram.com/feed/"
-        "https://planet.emacslife.com/atom.xml"))
-  )
+        "https://planet.emacslife.com/atom.xml")))
+
