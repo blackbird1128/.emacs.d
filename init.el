@@ -19,12 +19,18 @@
 (when (file-exists-p custom-file)
   (load custom-file))
 
-(use-package 'org)
 (require 'transient)
 
 (use-package no-littering
+  :vc (:url "https://github.com/emacscollective/no-littering"
+       :rev :newest)
   :init
   (require 'no-littering))
+
+(use-package exec-path-from-shell
+  :config
+  (exec-path-from-shell-copy-envs '("PATH" "MANPATH" "INFOPATH"))
+  (exec-path-from-shell-initialize))
 
 (use-package emacs
   :demand
