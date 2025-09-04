@@ -1,19 +1,3 @@
-(defvar bootstrap-version)
-(let ((bootstrap-file
-       (expand-file-name
-        "straight/repos/straight.el/bootstrap.el"
-        (or (bound-and-true-p straight-base-dir)
-            user-emacs-directory)))
-      (bootstrap-version 7))
-  (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
-  (load bootstrap-file nil 'nomessage))
-
 (add-hook 'emacs-startup-hook
 	  (lambda ()
 	    (message "*** Emacs loaded in %s seconds with %d garbage collections."
@@ -35,11 +19,10 @@
 (when (file-exists-p custom-file)
   (load custom-file))
 
-(straight-use-package 'org)
+(use-package 'org)
 (require 'transient)
 
 (use-package no-littering
-  :straight t
   :init
   (require 'no-littering))
 
@@ -123,7 +106,6 @@
               'face '(:family "IosevkaNerdFontMono" :height 1.0)))
 
 (use-package nerd-icons
-  :straight t
   :config
   (setq nerd-icons-extension-icon-alist
 	(assoc-delete-all "v" nerd-icons-extension-icon-alist))
@@ -136,7 +118,6 @@
   )
 
 (use-package doom-modeline
-  :straight t
   :ensure t
   :init
   (doom-modeline-mode 1)
@@ -164,7 +145,6 @@
   (marginalia-mode))
 
 (use-package vertico
-  :straight t
   :init
   (vertico-mode))
 
@@ -179,14 +159,12 @@
   :hook (rfn-eshadow-update-overlay . vertico-directory-tidy))
 
 (use-package orderless
-  :straight t
   :custom
   (completion-styles '(orderless flex basic))
   (completion-category-defaults nil)
   (completion-category-overrides '((file (styles partial-completion)))))
 
 (use-package consult
-  :straight t
   :bind (;; C-c bindings in `mode-specific-map'
 	 ("C-c s" . consult-ripgrep)
 	 ("C-c f" . consult-flymake)
@@ -236,7 +214,6 @@
   :defer 5)
 
 (use-package which-key
-  :diminish
   :init
   (which-key-mode)
   :config
@@ -253,8 +230,6 @@
   ([remap describe-key] . helpful-key))
 
 (use-package corfu
-   :straight (corfu :files (:defaults "extensions/*")
-                   :includes (corfu-popupinfo))
   :config
   ;; Enable auto completion and configure quitting
   (setq corfu-auto t
@@ -274,7 +249,6 @@
   (global-corfu-mode))
 
 (use-package cape
-  :straight t
   ;; Press C-c p ? to for help.
   :bind ("C-c p" . cape-prefix-map) ;; Alternative key: M-<tab>, M-p, M-+
   :init
@@ -297,8 +271,7 @@
   (corfu-popupinfo-mode)
   (setq corfu-popupinfo-delay 0.5))
 
-(use-package yasnippet-snippets
-  :straight t)
+(use-package yasnippet-snippets)
 
 (use-package yasnippet
   :hook (tuareg-mode . yas-minor-mode)
@@ -306,8 +279,7 @@
   ( push (expand-file-name "~/.config/emacs/snippets/") yas-snippet-dirs )
   (yas-reload-all))
 
-(use-package yasnippet-capf
-  :straight t)
+(use-package yasnippet-capf)
 
 (use-package avy
   :config
@@ -317,20 +289,17 @@
 
 (use-package jinx
   :defer 2
-  :diminish
   :hook (emacs-startup . global-jinx-mode)
   :bind (("M-$" . jinx-correct)
          ("C-M-$" . jinx-languages)))
 
 (use-package magit
-  :straight t
   :bind
   (("C-c g" . magit)))
 
 ;;;;;;;;;;;;;;;;;;;;; coq-setup ;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package proof-general
-  :straight t
   :config
   (setq
 	proof-three-window-enable t
@@ -338,18 +307,13 @@
 	proof-next-command-insert-space nil
 	proof-electric-terminator-enable nil
 	PA-one-command-per-line nil)
-
-  (diminish 'company-mode)
-  (diminish 'holes-mode)
-  (diminish 'outline-minor-mode) )
+)
 
 (custom-set-faces
  '(proof-locked-face ((t (:background "#3c3836")))))
 
 
 (use-package company-coq
-  :diminish (" 🐤")
-  :straight t
   :hook (coq-mode . company-coq-mode))
 
 ;;;;;;;;;;;;;;;;; why3 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -366,7 +330,6 @@
 ;;;;;;;;;;;;;;;;;; ocaml setup ;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package direnv
-  :straight t
   :config
   (direnv-mode))
 
@@ -420,12 +383,10 @@
 
 (use-package opam-switch-mode
   :ensure t
-  :diminish ("OSW")
   :hook
   ((coq-mode tuareg-mode) . opam-switch-mode))
 
 (use-package ocamlformat
-  :straight t
   :custom (ocamlformat-enable 'enable-outside-detected-project)
   :hook (before-save . ocamlformat-before-save))
 
@@ -438,8 +399,7 @@
 
 ;;;;;;;;;;;;;; markdown config ;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package markdown-mode
-  :straight t)
+(use-package markdown-mode)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -475,14 +435,12 @@
   :hook (LaTeX-mode . visual-fill-column-mode))
 
 (use-package cdlatex
-  :diminish
   :ensure t
   :hook (LaTeX-mode . turn-on-cdlatex)
   :bind (:map cdlatex-mode-map 
               ("<tab>" . cdlatex-tab)))
 
 (use-package latex
-  :diminish ("LaTeX" . "")
   :ensure eglot
   :ensure auctex
   :hook ((LaTeX-mode . prettify-symbols-mode)
@@ -492,7 +450,6 @@
 	 (LaTeX-mode . outline-minor-mode)
 	 )
   :config
-  (diminish 'outline-minor-mode "")
   (add-hook 'LaTeX-mode-hook
             (lambda ()
               (setq lsp-tex-server 'digestif)
@@ -516,7 +473,6 @@
 
 
 (use-package citar
-  :straight t
   :hook
   (LaTeX-mode . citar-capf-setup)
   (org-mode . citar-capf-setup)
@@ -572,7 +528,6 @@
 
 (use-package gptel
   :defer 5
-  :straight t
   :config
   (gptel-make-gemini "Gemini" :key (my/get-api-key "generativelanguage.googleapis.com" "apikey") :stream t)
   )
@@ -581,8 +536,6 @@
 ;;;;;;;;;;;; howm ;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package howm
-  :diminish
-  :straight t
   :hook ((org-mode . howm-mode))
   :init
   
