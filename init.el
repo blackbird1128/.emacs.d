@@ -621,16 +621,14 @@
 
   (variable-pitch-mode 1)
   (display-line-numbers-mode -1)
-
+  (setq org-agenda-files
+	(append (directory-files-recursively "~/org/agenda/" "\\.org$")
+		(directory-files-recursively "~/org/people/" "\\.org$")))
   (setq left-margin-width 2
       right-margin-width 2
       header-line-format " "
       org-hide-emphasis-markers t
       org-pretty-entities t
-      (setq org-agenda-files
-      (append (directory-files-recursively "~/org/agenda" "\\.org$")
-              (directory-files-recursively "~/org/people" "\\.org$")))
-      org-timeblock-files org-agenda-files
       org-agenda-skip-unavailable-files t
       org-agenda-mouse-1-follows-link t
       org-agenda-skip-scheduled-if-done t
