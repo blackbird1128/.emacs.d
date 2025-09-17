@@ -28,6 +28,8 @@
   (require 'no-littering))
 
 (use-package exec-path-from-shell
+  :vc (:url "https://github.com/purcell/exec-path-from-shell"
+       :rev :newest)
   :config
   (exec-path-from-shell-copy-envs '("PATH" "MANPATH" "INFOPATH"))
   (exec-path-from-shell-initialize))
@@ -306,6 +308,7 @@
 ;;;;;;;;;;;;;;;;;;;;; coq-setup ;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package proof-general
+  :defer 4
   :config
   (setq
 	proof-three-window-enable t
@@ -326,6 +329,7 @@
 
 
 (use-package why3
+  :defer 3
   :load-path "lisp"
   :mode ("\\.mlw\\'" . why3-mode)
   :bind (:map why3-mode-map
@@ -542,6 +546,7 @@
 ;;;;;;;;;;;; howm ;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package howm
+  :defer 3
   :hook ((org-mode . howm-mode))
   :init
   
@@ -732,6 +737,7 @@
 ;; -------------------- Org config end --------------------
 
 (use-package elfeed
+  :defer 4
   :custom
     (elfeed-db-directory
      (expand-file-name "elfeed" user-emacs-directory))
