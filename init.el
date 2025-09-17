@@ -627,7 +627,9 @@
       header-line-format " "
       org-hide-emphasis-markers t
       org-pretty-entities t
-      org-agenda-files (directory-files-recursively "~/org/" "\\.org$")
+      (setq org-agenda-files
+      (append (directory-files-recursively "~/org/agenda" "\\.org$")
+              (directory-files-recursively "~/org/people" "\\.org$")))
       org-timeblock-files org-agenda-files
       org-agenda-skip-unavailable-files t
       org-agenda-mouse-1-follows-link t
