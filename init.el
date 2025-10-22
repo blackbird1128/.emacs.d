@@ -85,11 +85,9 @@
   (setq recentf-max-menu-items 25)
   (global-set-key (kbd "C-x C-r") 'recentf-open-files)
 
-  ;; Emacs 30 and newer: Disable Ispell completion function.
-  ;; Try `cape-dict' as an alternative.
   (setopt text-mode-ispell-word-completion nil)
 
-  )
+)
 
 (require 'package)
 
@@ -121,7 +119,7 @@
       (append
        `(("v"
           ,#'my/chicken-icon
-          "🐔" :face nerd-icons-yellow )) ;; This face might be ignored
+          "🐔" :face nerd-icons-yellow )) ;; This face is ignored
        nerd-icons-extension-icon-alist))
   )
 
@@ -130,8 +128,7 @@
   :init
   (doom-modeline-mode 1)
   :config
-  (setq mode-line-right-align-edge 'right-fringe)
-  )
+  (setq mode-line-right-align-edge 'right-fringe))
 
 (use-package eat
   :hook ((eshell-mode . eat-eshell-mode)))
@@ -182,9 +179,6 @@
          ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
          ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
          ("C-x p b" . consult-project-buffer))      ;; orig. project-switch-to-buffer
-  ;; Enable automatic preview at point in the *Completions* buffer. This is
-  ;; relevant when you use the default completion UI.
-  :hook (completion-list-mode . consult-preview-at-point-mode)
 
   :config
   (consult-customize
@@ -257,7 +251,6 @@
   (global-corfu-mode))
 
 (use-package cape
-  ;; Press C-c p ? to for help.
   :bind ("C-c p" . cape-prefix-map) ;; Alternative key: M-<tab>, M-p, M-+
   :init
   ;; Add to the global default value of `completion-at-point-functions' which is
@@ -315,8 +308,7 @@
 	proof-splash-enable nil
 	proof-next-command-insert-space nil
 	proof-electric-terminator-enable nil
-	PA-one-command-per-line nil)
-)
+	PA-one-command-per-line nil))
 
 (custom-set-faces
  '(proof-locked-face ((t (:background "#3c3836")))))
@@ -333,9 +325,7 @@
   :load-path "lisp"
   :mode ("\\.mlw\\'" . why3-mode)
   :bind (:map why3-mode-map
-	      ("C-c C-c" . compile))
-)
-
+	      ("C-c C-c" . compile)))
 
 ;;;;;;;;;;;;;;;;;; ocaml setup ;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -386,7 +376,6 @@
   (add-to-list 'eglot-server-programs
              '(why3-mode . ("why3find" "lsp" "--port" :autoport)))
 
-
   ;; (advice-add #'eglot-completion-at-point :around #'cape-wrap-buster)
   :hook ((tuareg-mode .  eglot-ensure ) (python-mode . eglot-ensure) (why3-mode . eglot-ensure))
   :commands (eglot))
@@ -436,8 +425,7 @@
 					(my/pdf-annot-highlight "plum1" )))]])  
   (pdf-loader-install)
   (pdf-tools-install)
-  :bind (:map pdf-view-mode-map ("h" . my/pdf-highlight-transient))
-  )
+  :bind (:map pdf-view-mode-map ("h" . my/pdf-highlight-transient)))
 
 ;;;;;;;;;;;;;;;;;;; Latex config ;;;;;;;;;;;;;;;;;;;;;
 
@@ -457,8 +445,8 @@
 	 (LaTeX-mode . eglot-ensure )
 	 (LaTeX-mode . turn-on-reftex)
 	 (LaTeX-mode . TeX-fold-mode)
-	 (LaTeX-mode . outline-minor-mode)
-	 )
+	 (LaTeX-mode . outline-minor-mode))
+  
   :config
   (add-hook 'LaTeX-mode-hook
             (lambda ()
@@ -478,9 +466,7 @@
 	default-TeX-master nil
 	TeX-source-correlate-method "synctext"
 	TeX-source-correlate-start-server t
-	TeX-source-correlate-mode 1)
-)
-
+	TeX-source-correlate-mode 1))
 
 (use-package citar
   :hook
