@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: debug
+# key: deb
+# --
+Logs.debug (fun m -> m "${1:msg}");

@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: test-case
+# key: tcase
+# --
+Hashtbl.add table "${1:filename}"
+    (create_fixed_test
+       "${2:msg}"
+       ${3:fn} doc);
