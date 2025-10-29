@@ -52,15 +52,10 @@
 
 (setq normal-gc-cons-threshold (* 256 1024 1024))
 (setq init-gc-cons-threshold (* 1024  1024 1024))
-  
+
 (setq gc-cons-threshold init-gc-cons-threshold)
 (add-hook 'emacs-startup-hook
-   (lambda () (setq gc-cons-threshold normal-gc-cons-threshold)))
-
-;(put 'mode-line-format 'initial-value (default-toplevel-value 'mode-line-format))
-;(setq-default mode-line-format nil)
-;(dolist (buf (buffer-list))
-;  (with-current-buffer buf (setq mode-line-format nil)))
+	  (lambda () (setq gc-cons-threshold normal-gc-cons-threshold)))
 
 ;; PERF: A second, case-insensitive pass over `auto-mode-alist' is time wasted.
 (setq auto-mode-case-fold nil)
@@ -80,7 +75,6 @@
 ;; in non-focused windows.
 (setq-default cursor-in-non-selected-windows nil)
 (setq highlight-nonselected-windows nil)
-
 
 (push '(menu-bar-lines . 0)   default-frame-alist)
 (push '(tool-bar-lines . 0)   default-frame-alist)
