@@ -1,3 +1,25 @@
+(use-package compile-angel
+  :ensure t
+  :demand t
+  :config
+  ;; Set `compile-angel-verbose' to nil to disable compile-angel messages.
+  ;; (When set to nil, compile-angel won't show which file is being compiled.)
+  (setq compile-angel-verbose t)
+
+  ;; The following directive prevents compile-angel from compiling your init
+  ;; files. If you choose to remove this push to `compile-angel-excluded-files'
+  ;; and compile your pre/post-init files, ensure you understand the
+  ;; implications and thoroughly test your code. For example, if you're using
+  ;; the `use-package' macro, you'll need to explicitly add:
+  ;; (eval-when-compile (require 'use-package))
+  ;; at the top of your init file.
+  (push "/init.el" compile-angel-excluded-files)
+  (push "/early-init.el" compile-angel-excluded-files)
+
+  ;; A global mode that compiles .el files before they are loaded
+  ;; using `load' or `require'.
+  (compile-angel-on-load-mode 1))
+
 (add-hook 'emacs-startup-hook
 	  (lambda ()
 	    (message "*** Emacs loaded in %s seconds with %d garbage collections."
@@ -31,8 +53,7 @@
   :vc (:url "https://github.com/purcell/exec-path-from-shell"
        :rev :newest)
   :config
-  (exec-path-from-shell-copy-envs '("PATH" "MANPATH" "INFOPATH"))
-  (exec-path-from-shell-initialize))
+  (exec-path-from-shell-copy-envs '("PATH" "MANPATH" "INFOPATH")))
 
 (use-package emacs
   :demand
@@ -204,7 +225,6 @@
                  nil
                  (window-parameters (mode-line-format . none)))))
 
-;; Consult users will also want the embark-consult package.
 (use-package embark-consult
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
@@ -251,7 +271,6 @@
   (global-corfu-mode))
 
 (use-package cape
-  :bind ("C-c p" . cape-prefix-map) ;; Alternative key: M-<tab>, M-p, M-+
   :init
   ;; Add to the global default value of `completion-at-point-functions' which is
   ;; used by `completion-at-point'.  The order of the functions matters, the
@@ -332,15 +351,6 @@
 (use-package direnv
   :config
   (direnv-mode))
-
-(defun opam-env ()
-  (interactive nil)
-  (dolist (var (car (read-from-string (shell-command-to-string "opam config env --sexp"))))
-    (setenv (car var) (cadr var))))
-
-(opam-env)
-(add-to-list 'exec-path (concat (getenv "OPAM_SWITCH_PREFIX") "/bin"))
-
 
 (use-package tuareg
   :mode (("\\.ocamlinit\\'" . tuareg-mode))
@@ -733,4 +743,3 @@
   (setq elfeed-feeds
       '("http://nullprogram.com/feed/"
         "https://planet.emacslife.com/atom.xml")))
-

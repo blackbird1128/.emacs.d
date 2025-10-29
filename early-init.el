@@ -1,3 +1,10 @@
+;; Ensure Emacs loads the most recent byte-compiled files.
+(setq load-prefer-newer t)
+;; Make Emacs Native-compile .elc files asynchronously by setting
+;; `native-comp-jit-compilation' to t.
+(setq native-comp-jit-compilation t)
+(setq native-comp-deferred-compilation native-comp-jit-compilation)  ; Deprecated
+
 (unless noninteractive
   ;; PERF: Resizing the Emacs frame (to accommodate fonts that are smaller or
   ;;   larger than the system font) appears to impact startup time
@@ -49,8 +56,6 @@
 (setq gc-cons-threshold init-gc-cons-threshold)
 (add-hook 'emacs-startup-hook
    (lambda () (setq gc-cons-threshold normal-gc-cons-threshold)))
-
-(setq load-prefer-newer noninteractive)
 
 ;(put 'mode-line-format 'initial-value (default-toplevel-value 'mode-line-format))
 ;(setq-default mode-line-format nil)
