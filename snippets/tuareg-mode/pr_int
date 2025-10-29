@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: printnum
+# key:  prnum
+# --
+print_endline ("${1:cond}" ^ string_of_int $2);
