@@ -1,3 +1,13 @@
+(require 'package)
+
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
+(add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/"))
+(add-to-list 'package-archives '("elpa" . "https://elpa.gnu.org/packages/"))
+
+(package-initialize)
+(unless package-archive-contents
+  (package-refresh-contents))
+
 (use-package compile-angel
   :ensure t
   :demand t
@@ -103,15 +113,7 @@
 
   (setopt text-mode-ispell-word-completion nil))
 
-(require 'package)
 
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
-(add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/"))
-(add-to-list 'package-archives '("elpa" . "https://elpa.gnu.org/packages/"))
-
-(package-initialize)
-(unless package-archive-contents
-  (package-refresh-contents))
 
 (require 'use-package)
 (setq use-package-always-ensure t)
@@ -182,6 +184,7 @@
   :bind (;; C-c bindings in `mode-specific-map'
 	 ("C-c s" . consult-ripgrep)
 	 ("C-c f" . consult-flymake)
+	 ("C-c m" . consult-imenu)
 					;("C-c i" . consult-info)
          ([remap Info-search] . consult-info)
          ;; C-x bindings in `ctl-x-map'
@@ -370,7 +373,6 @@
   (add-to-list 'eglot-server-programs
 	       '(why3-mode . ("why3find" "lsp" "--port" :autoport)))
 
-  (advice-add #'eglot-completion-at-point :around #'cape-wrap-buster)
   :hook ((tuareg-mode .  eglot-ensure ) (python-mode . eglot-ensure) (why3-mode . eglot-ensure))
   :commands (eglot))
 
