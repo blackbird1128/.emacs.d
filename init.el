@@ -307,6 +307,8 @@
   :bind
   (("C-c g" . magit)))
 
+(use-package crux)
+
 ;;;;;;;;;;;;;;;;;;;;; coq-setup ;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package proof-general
@@ -395,6 +397,12 @@
 ;;;;;;;;;;;;;; markdown config ;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package markdown-mode)
+
+
+;;;;; nix config ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package nix-mode
+  :mode "\\.nix\\'")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
