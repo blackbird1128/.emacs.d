@@ -309,6 +309,43 @@
 
 (use-package crux)
 
+(use-package flymake
+  :ensure t
+  :pin gnu
+  :config
+  (setq flymake-diagnostic-format-alist
+        '((t . (origin code message))))) ; Fix messages not being completely displayed in Ocaml for example
+
+(defun my/eglot-capf ()
+  (setq-local completion-at-point-functions
+	      (list (cape-capf-super
+                     #'eglot-completion-at-point
+		     #'cape-file
+                     #'yasnippet-capf))))
+
+(use-package eglot
+  :init
+  (add-hook 'eglot-managed-mode-hook 'remove-highlight)
+  (add-hook 'eglot-managed-mode-hook 'display-line-numbers-mode)
+  (add-hook 'eglot-managed-mode-hook #'my/eglot-capf)
+  :bind
+  (:map eglot-keymap
+	("r" . eglot-rename)               ;; Rename
+	("a" . eglot-code-actions)         ;; Code actions
+	("f" . eglot-format)               ;; Format buffer
+	("h" . eldoc-doc-buffer)           ;; Show documentation
+	("d" . eglot-find-declaration)     ;; Go to declaration
+	("i" . eglot-find-implementation)  ;; Go to implementation
+	("t" . eglot-find-type-definition)) ;; Go to type definition
+  :config
+  (define-prefix-command 'eglot-keymap)    ;; Define the prefix keymap
+  (global-set-key (kbd "C-c l") 'eglot-keymap) ;; Bind C-c l to the prefix keymap
+  (add-to-list 'eglot-server-programs
+	       '(why3-mode . ("why3find" "lsp" "--port" :autoport)))
+
+  :hook ((tuareg-mode .  eglot-ensure ) (python-mode . eglot-ensure) (why3-mode . eglot-ensure))
+  :commands (eglot))
+
 ;;;;;;;;;;;;;;;;;;;;; coq-setup ;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package proof-general
@@ -357,36 +394,6 @@
   :hook (tuareg-mode . display-line-numbers-mode))
 
 (defun remove-highlight () (setq mouse-highlight nil))
-
-(defun my/eglot-capf ()
-  (setq-local completion-at-point-functions
-	      (list (cape-capf-super
-                     #'eglot-completion-at-point
-		     #'cape-file
-                     #'yasnippet-capf))))
-
-(use-package eglot
-  :init
-  (add-hook 'eglot-managed-mode-hook 'remove-highlight)
-  (add-hook 'eglot-managed-mode-hook 'display-line-numbers-mode)
-  (add-hook 'eglot-managed-mode-hook #'my/eglot-capf)
-  :bind
-  (:map eglot-keymap
-	("r" . eglot-rename)               ;; Rename
-	("a" . eglot-code-actions)         ;; Code actions
-	("f" . eglot-format)               ;; Format buffer
-	("h" . eldoc-doc-buffer)           ;; Show documentation
-	("d" . eglot-find-declaration)     ;; Go to declaration
-	("i" . eglot-find-implementation)  ;; Go to implementation
-	("t" . eglot-find-type-definition)) ;; Go to type definition
-  :config
-  (define-prefix-command 'eglot-keymap)    ;; Define the prefix keymap
-  (global-set-key (kbd "C-c l") 'eglot-keymap) ;; Bind C-c l to the prefix keymap
-  (add-to-list 'eglot-server-programs
-	       '(why3-mode . ("why3find" "lsp" "--port" :autoport)))
-
-  :hook ((tuareg-mode .  eglot-ensure ) (python-mode . eglot-ensure) (why3-mode . eglot-ensure))
-  :commands (eglot))
 
 (use-package opam-switch-mode
   :ensure t
