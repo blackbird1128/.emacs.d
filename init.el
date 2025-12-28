@@ -321,11 +321,21 @@
    proof-electric-terminator-enable nil
    PA-one-command-per-line nil))
 
-(custom-set-faces
- '(proof-locked-face ((t (:background "#3c3836")))))
+ ;; (use-package rocq-mode
+ ;;    :vc (:url "https://codeberg.org/jpoiret/rocq-mode.el.git"
+ ;;         :rev :newest)
+ ;;    :mode "\\.v\\'"
+ ;;    :hook
+ ;;    (rocq-mode . rocq-follow-viewport-mode)
+ ;;    (rocq-mode . rocq-auto-goals-at-point-mode))
 
-(use-package company-coq
-  :hook (coq-mode . company-coq-mode))
+(custom-set-faces
+ '(proof-locked-face ((t (:background "#3c3836"))))
+ '(rocq-mode-last-goal-request ((t (:background "#3c3836"))))
+ )
+
+;; (use-package company-coq
+;;   :hook (rocq-mode . company-coq-mode))
 
 ;;;;;;;;;;;;;;;;; why3 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
