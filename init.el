@@ -307,7 +307,9 @@
   :bind
   (("C-c g" . magit)))
 
-(use-package crux)
+(use-package crux
+  :bind
+  (("C-c d" . crux-delete-file-and-buffer)))
 
 (use-package flymake
   :ensure t
@@ -453,12 +455,6 @@
 (use-package visual-fill-column
   :hook (LaTeX-mode . visual-fill-column-mode))
 
-(use-package cdlatex
-  :ensure t
-  :hook (LaTeX-mode . turn-on-cdlatex)
-  :bind (:map cdlatex-mode-map 
-	      ("<tab>" . cdlatex-tab)))
-
 (use-package latex
   :ensure eglot
   :ensure auctex
@@ -477,7 +473,6 @@
 
   (add-hook 'TeX-after-compilation-finished-functions
             #'TeX-revert-document-buffer)
-
   
   (setq +latex-viewers '(pdf-tools)
 	TeX-command-extra-options "--shell-escape"
@@ -487,7 +482,18 @@
 	default-TeX-master nil
 	TeX-source-correlate-method "synctext"
 	TeX-source-correlate-start-server t
-	TeX-source-correlate-mode 1))
+	TeX-source-correlate-mode 1)
+
+  (defun my/latexindent-region (beg end)
+    "Run latexindent -l on the active region."
+    (interactive "r")
+    (unless (use-region-p)
+      (user-error "No active region"))
+    (save-excursion
+      (shell-command-on-region
+       beg end "latexindent -l" (current-buffer) t)))
+  :bind ( "<backtab>" . my/latexindent-region)
+  )
 
 (use-package citar
   :hook
@@ -497,7 +503,9 @@
   (setq citar-bibliography '("~/org/phd/doctorat_aj.bib")))
 
 (use-package cdlatex
-  :hook ((cdlatex-tab . yas-expand)
+  :hook (
+	 (LaTeX-mode . turn-on-cdlatex)
+	 (cdlatex-tab . yas-expand)
          (cdlatex-tab . cdlatex-in-yas-field))
   :config
   (use-package yasnippet
@@ -636,8 +644,13 @@
 	line-spacing 0.2
 	org-return-follows-link t
 	org-use-sub-superscripts "{}"
-	org-refile-targets '((org-agenda-files :maxlevel . 2)))
+	)
 
+  (setq org-refile-use-outline-path 'file)
+  (setq org-outline-path-complete-in-steps nil)
+  (setq org-refile-allow-creating-parent-nodes 'confirm)
+  (setq org-refile-targets '(("~/org/scrapyard/done_tasks.org" :maxlevel 2)))
+  
   (advice-add 'org-refile :after 'org-save-all-org-buffers)
 
   (setq org-todo-keywords
