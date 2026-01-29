@@ -411,11 +411,13 @@
 (use-package poetry
   :ensure t)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 ;;;;;;;;;;;;;; markdown config ;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package markdown-mode)
+
+;;;;;;;;;;;;;; yaml config ;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package yaml-mode)
 
 
 ;;;;; nix config ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
