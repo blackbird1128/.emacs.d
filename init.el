@@ -1,3 +1,5 @@
+;;; init.el -*- lexical-binding: t -*-
+
 (require 'package)
 
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
@@ -5,6 +7,13 @@
 (add-to-list 'package-archives '("elpa" . "https://elpa.gnu.org/packages/"))
 
 (package-initialize)
+
+(eval-when-compile
+  (require 'use-package))
+(require 'use-package)
+(setq use-package-always-ensure t)
+(setq use-package-enable-imenu-support t)
+
 (unless package-archive-contents
   (package-refresh-contents))
 
@@ -66,12 +75,12 @@
 
 (use-package emacs
   :demand
-  :bind (( "C-x C-b" . switch-to-buffer))
-  :custom
+  :bind (("C-x C-b" . switch-to-buffer))
+  :init
   (setq auto-mode-alist (remove (rassoc 'verilog-mode auto-mode-alist) auto-mode-alist))
-  (enable-recursive-minibuffers t)
-  (read-extended-command-predicate #'command-completion-default-include-p)
-  (tab-always-indent 'complete)
+  (setq enable-recursive-minibuffers t)
+  (setq read-extended-command-predicate #'command-completion-default-include-p)
+  (setq tab-always-indent 'complete)
   :config
   (set-face-attribute 'default nil :font "IosevkaNerdFontMono" :height 155)
   (set-face-attribute 'fixed-pitch nil :font "IosevkaNerdFontMono" :height 155)
@@ -92,17 +101,16 @@
   (add-hook 'prog-mode-hook 'display-line-numbers-mode)
   
   (set-fringe-mode 10)
-  (setq
-   delete-auto-save-files t
-   visual-fill-column-width 80
-   visible-bell t
-   sentence-end-double-space nil
-   
-   grep-command "rg -n -H --no-heading -e '' $(git rev-parse --show-toplevel || pwd)"
-   compilation-scroll-output t
-   compilation-max-output-line-length nil)
+  (setq delete-auto-save-files t
+        visual-fill-column-width 80
+        visible-bell t
+        sentence-end-double-space nil
+        grep-command "rg -n -H --no-heading -e '' $(git rev-parse --show-toplevel || pwd)"
+        compilation-scroll-output t
+        compilation-max-output-line-length nil)
 
-  (setopt dictionary-server "dict.org")
+  (setopt dictionary-server "dict.org"
+          text-mode-ispell-word-completion nil)
   (savehist-mode 1)
   
   (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
@@ -110,14 +118,7 @@
   (recentf-mode 1)
   (setq recentf-max-menu-items 25)
   (global-set-key (kbd "C-x C-r") 'recentf-open-files)
-
-  (setopt text-mode-ispell-word-completion nil))
-
-
-
-(require 'use-package)
-(setq use-package-always-ensure t)
-(setq use-package-enable-imenu-support t)
+  )
 
 (defun my/chicken-icon (_1 _2 _3)
   (propertize "🐔"
@@ -197,8 +198,8 @@
    consult-theme :preview-key '(:debounce 0.2 any)
    consult-ripgrep consult-git-grep consult-grep
    consult-bookmark consult-recent-file consult-xref
-   consult--source-bookmark consult--source-file-register
-   consult--source-recent-file consult--source-project-recent-file
+   consult-source-bookmark consult-source-file-register
+   consult-source-recent-file consult-source-project-recent-file
    ;; :preview-key "M-."
    :preview-key '(:debounce 0.4 any))
 
@@ -219,9 +220,6 @@
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 
-(use-package eat
-  :hook ((eshell-mode . eat-eshell-mode)))
-
 (use-package wgrep
   :defer 5)
 
@@ -230,6 +228,11 @@
   (which-key-mode)
   :config
   (setq which-key-idle-delay 0.2))
+
+;; (use-package breadcrumb
+;;   :hook
+;;   (prog-mode . breadcrumb-local-mode)
+;;   )
 
 (use-package helpful
   :custom
@@ -344,7 +347,10 @@
   (global-set-key (kbd "C-c l") 'eglot-keymap) ;; Bind C-c l to the prefix keymap
   (add-to-list 'eglot-server-programs
 	       '(why3-mode . ("why3find" "lsp" "--port" :autoport)))
+  (setq eglot-headerline-breadcrumb-segments
+	'(project file symbols))
 
+  
   :hook ((tuareg-mode .  eglot-ensure ) (python-mode . eglot-ensure) (why3-mode . eglot-ensure))
   :commands (eglot))
 
@@ -403,8 +409,13 @@
   ((coq-mode tuareg-mode) . opam-switch-mode))
 
 (use-package ocamlformat
-  :custom (ocamlformat-enable 'enable-outside-detected-project)
-  :hook (before-save . ocamlformat-before-save))
+  :custom
+  (ocamlformat-enable 'enable-outside-detected-project)
+  :hook
+  (before-save .  ocamlformat-before-save))
+
+(use-package dune
+  :mode ("\\`dune\\(?:-project\\)?\\'" . dune-mode))
 
 ;;;;;;;;;;;;;;;; python config ;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -415,10 +426,9 @@
 
 (use-package markdown-mode)
 
-;;;;;;;;;;;;;; yaml config ;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;; yaml config ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package yaml-mode)
-
 
 ;;;;; nix config ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -457,8 +467,47 @@
 (use-package visual-fill-column
   :hook (LaTeX-mode . visual-fill-column-mode))
 
+(use-package cdlatex
+  :ensure t
+  :hook (LaTeX-mode . turn-on-cdlatex)
+  :bind (:map cdlatex-mode-map
+              ("<tab>" . cdlatex-tab))
+  :config
+  (with-eval-after-load 'yasnippet
+    (defun cdlatex-in-yas-field ()
+      ;; Check if we're at the end of the Yas field
+      (when-let* ((_ (overlayp yas--active-field-overlay))
+                  (end (overlay-end yas--active-field-overlay)))
+        (if (>= (point) end)
+            ;; Call yas-next-field if cdlatex can't expand here
+            (let ((s (thing-at-point 'sexp)))
+              (unless (and s (assoc (substring-no-properties s)
+                                    cdlatex-command-alist-comb))
+                (yas-next-field-or-maybe-expand)
+                t))
+          ;; otherwise expand and jump to the correct location
+          (let (cdlatex-tab-hook minp)
+            (setq minp
+                  (min (save-excursion (cdlatex-tab)
+                                       (point))
+                       (overlay-end yas--active-field-overlay)))
+            (goto-char minp)
+            t))))
+
+    (defun yas-next-field-or-cdlatex ()
+      "Jump to the next Yas field correctly with cdlatex active."
+      (interactive)
+      (if (or (bound-and-true-p cdlatex-mode)
+              (bound-and-true-p org-cdlatex-mode))
+          (cdlatex-tab)
+        (yas-next-field-or-maybe-expand)))
+
+    (define-key yas-keymap (kbd "<tab>") #'yas-next-field-or-cdlatex)
+    (define-key yas-keymap (kbd "TAB") #'yas-next-field-or-cdlatex)
+    (add-hook 'cdlatex-tab-hook #'yas-expand)
+    (add-hook 'cdlatex-tab-hook #'cdlatex-in-yas-field)))
+
 (use-package latex
-  :ensure eglot
   :ensure auctex
   :hook ((LaTeX-mode . prettify-symbols-mode)
 	 (LaTeX-mode . eglot-ensure )
@@ -504,45 +553,6 @@
   :config
   (setq citar-bibliography '("~/org/phd/doctorat_aj.bib")))
 
-(use-package cdlatex
-  :hook (
-	 (LaTeX-mode . turn-on-cdlatex)
-	 (cdlatex-tab . yas-expand)
-         (cdlatex-tab . cdlatex-in-yas-field))
-  :config
-  (use-package yasnippet
-    :bind (:map yas-keymap
-		("<tab>" . yas-next-field-or-cdlatex)
-		("TAB" . yas-next-field-or-cdlatex))
-    :config
-    (defun cdlatex-in-yas-field ()
-      ;; Check if we're at the end of the Yas field
-      (when-let* ((_ (overlayp yas--active-field-overlay))
-                  (end (overlay-end yas--active-field-overlay)))
-        (if (>= (point) end)
-            ;; Call yas-next-field if cdlatex can't expand here
-            (let ((s (thing-at-point 'sexp)))
-	      (unless (and s (assoc (substring-no-properties s)
-                                    cdlatex-command-alist-comb))
-                (yas-next-field-or-maybe-expand)
-                t))
-          ;; otherwise expand and jump to the correct location
-          (let (cdlatex-tab-hook minp)
-            (setq minp
-                  (min (save-excursion (cdlatex-tab)
-				       (point))
-		       (overlay-end yas--active-field-overlay)))
-            (goto-char minp) t))))
-
-    (defun yas-next-field-or-cdlatex nil
-      (interactive)
-      "Jump to the next Yas field correctly with cdlatex active."
-      (if
-          (or (bound-and-true-p cdlatex-mode)
-	      (bound-and-true-p org-cdlatex-mode))
-          (cdlatex-tab)
-        (yas-next-field-or-maybe-expand)))))
-
 ;;;;;;;;;;;;;;;; writing ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Productivity stuff
 
@@ -556,186 +566,215 @@
 
 ;;;;;;;;;;;; howm ;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(use-package howm-org
+  :after org
+  :ensure nil)   ;; ensures it's loaded early enough
+
 (use-package howm
+  :after howm-org
   :defer 3
   :hook ((org-mode . howm-mode))
   :init
+  (setq howm-directory "~/org/"
+        howm-create-id t
+        howm-follow-theme t
+        howm-view-use-grep t
+        howm-view-grep-command "rg"
+        howm-view-grep-option "-nH --no-heading --color never"
+        howm-view-grep-fixed-option "-F")
   
-  (require 'howm-org) ;; Write notes in Org-mode. (*2)
-  (setq howm-create-id t)
-
-  ;; Preferences
-  (setq howm-directory "~/org/" ;; Where to store the files?
-	howm-follow-theme t ;; Use your Emacs theme colors. (*3)
-	howm-view-use-grep t
-	howm-view-grep-command "rg"
-	howm-view-grep-option "-nH --no-heading --color never"
-	howm-view-grep-extended-option nil
-	howm-view-grep-fixed-option "-F"
-	howm-view-grep-expr-option nil
-	howm-view-grep-file-stdin-option nil)
-
-  ;; Default recent to sorting by mtime
+  :config
   (advice-add 'howm-list-recent :after #'howm-view-sort-by-mtime)
-  ;; Default all to sorting by creation, newest first
-  (advice-add 'howm-list-all :after #'(lambda () (howm-view-sort-by-date t))))
+  (advice-add 'howm-list-all :after (lambda () (howm-view-sort-by-date t))))
 
 ;; Org settings
 
-(use-package org
-  :bind (
-	 ("C-c a" . org-agenda)
-	 ("C-c c" . org-capture)
-	 ("C-c t" . org-set-tags-command)
-	 ("C-c b" . org-switchb))
-  :hook ((org-mode . visual-line-mode)
-	 (org-mode . variable-pitch-mode))
-  
-  :config
+(defun my/org--font-exists-p (font)
+  (and font (find-font (font-spec :name font))))
 
-  (let* ((variable-tuple
-          (cond ((x-list-fonts "IosevkaAile")         '(:font "IosevkaAile"))
-                ((x-family-fonts "Sans Serif")    '(:family "Sans Serif"))
-                (nil (warn "Cannot find a Sans Serif Font.  Install Source Sans Pro."))))
-         (headline  `(:weight semi-bold ))
-	 (fg (doom-color 'fg))
-	 (yellow (doom-color 'yellow))
-	 (green (doom-color 'green))
-	 (violet (doom-color 'violet)))
+(defun my/org-apply-faces ()
+  "Apply Org faces in a theme-safe way."
+  (when (featurep 'doom-themes) ;; if you use doom-themes colors
+    (let* ((variable-font (cond
+                           ((my/org--font-exists-p "IosevkaNerdFontMono") "IosevkaNerdFontMono")
+                           ((my/org--font-exists-p "Sans Serif") "Sans Serif")
+                           (t nil)))
+           (mono-font (cond
+                       ((my/org--font-exists-p "IosevkaNerdFontMono") "IosevkaNerdFontMono")
+                       ((my/org--font-exists-p "Iosevka") "Iosevka")
+                       (t nil)))
+           (headline '(:weight normal))
+           (fg (doom-color 'fg))
+           (yellow (doom-color 'yellow))
+           (green (doom-color 'green))
+           (violet (doom-color 'violet)))
+      (custom-theme-set-faces
+       'user
+       ;; Base faces
+       `(org-default ((t (:inherit default ,@(when variable-font `(:font ,variable-font))))))
+       `(variable-pitch ((t (,@(when variable-font `(:font ,variable-font)) :height 1.01))))
+       `(fixed-pitch ((t (,@(when mono-font `(:font ,mono-font)) :height 1.10))))
 
-    (custom-theme-set-faces
-     'user
-     `(org-default ((t (,@variable-tuple))))
-     `(variable-pitch ((t (,@variable-tuple :height 170  ))))
-     `(fixed-pitch ((t (,:font "IosevkaNerdFontMono" :height 170))))
-     `(org-level-8 ((t (,@headline ,@variable-tuple ))))
-     `(org-level-7 ((t (,@headline ,@variable-tuple))))
-     `(org-level-6 ((t (,@headline ,@variable-tuple))))
-     `(org-level-5 ((t (,@headline ,@variable-tuple))))
-     `(org-level-4 ((t (,@headline ,@variable-tuple :height 1.10))))
-     `(org-level-3 ((t (,@headline ,@variable-tuple :height 1.20  :foreground ,violet))))
-     `(org-level-2 ((t (,@headline ,@variable-tuple :height 1.50 :foreground ,green))))
-     `(org-level-1 ((t (,@headline ,@variable-tuple :height 1.60 :foreground ,yellow))))
-     `(org-document-title ((t (,@headline ,@variable-tuple :height 1.20 :underline nil))))
+       ;; Headings
+       `(org-level-8 ((t (,@headline ,@(when variable-font `(:font ,variable-font))))))
+       `(org-level-7 ((t (,@headline ,@(when variable-font `(:font ,variable-font))))))
+       `(org-level-6 ((t (,@headline ,@(when variable-font `(:font ,variable-font))))))
+       `(org-level-5 ((t (,@headline ,@(when variable-font `(:font ,variable-font))))))
+       `(org-level-4 ((t (,@headline ,@(when variable-font `(:font ,variable-font)) :height 1.05))))
+       `(org-level-3 ((t (,@headline ,@(when variable-font `(:font ,variable-font)) :height 1.07 :foreground ,violet))))
+       `(org-level-2 ((t (,@headline ,@(when variable-font `(:font ,variable-font)) :height 1.10 :foreground ,green))))
+       `(org-level-1 ((t (,@headline ,@(when variable-font `(:font ,variable-font)) :height 1.20 :foreground ,yellow))))
+       `(org-document-title ((t (,@headline ,@(when variable-font `(:font ,variable-font)) :height 1.20 :underline nil))))
 
-     `(org-table    ((t (:inherit ( fixed-pitch) :foreground ,fg   ))))
-     `(org-checkbox ((t (:foreground ,fg))))
-     `(org-block    (( t :foreground nil :inherit fixed-pitch)))
-     `(org-code     ((t :inherit (shadow fixed-pitch))))
-     `(org-verbatim ((t :inherit (shadow fixed-pitch))))
-     `(org-special-keyword ((t :inherit (font-lock-comment-face fixed-pitch))))
-     `(org-link ((t :weight bold :underline t :inherit fixed-pitch)))
-     ))
+       ;; Fixed-pitch areas
+       `(org-table ((t (:inherit fixed-pitch :foreground ,fg))))
+       `(org-checkbox ((t (:foreground ,fg))))
+       `(org-block ((t (:inherit fixed-pitch :foreground unspecified))))
+       `(org-code ((t (:inherit (shadow fixed-pitch)))))
+       `(org-verbatim ((t (:inherit (shadow fixed-pitch)))))
+       `(org-special-keyword ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+       `(org-link ((t (:inherit fixed-pitch :weight bold :underline t))))))))
 
-  (variable-pitch-mode 1)
+(defun my/org-agenda-files ()
+  (append
+   (directory-files-recursively (expand-file-name "~/org/agenda/") "\\.org\\'")
+   (directory-files-recursively (expand-file-name "~/org/people/") "\\.org\\'")))
+
+(defun my/org-buffer-setup ()
+  (visual-line-mode 1)
   (display-line-numbers-mode -1)
-  (setq org-agenda-files
-	(append (directory-files-recursively "~/org/agenda/" "\\.org$")
-		(directory-files-recursively "~/org/people/" "\\.org$")))
-  (setq left-margin-width 2
-	right-margin-width 2
-	header-line-format " "
-	org-hide-emphasis-markers t
-	org-pretty-entities t
-	org-agenda-skip-unavailable-files t
-	org-agenda-mouse-1-follows-link t
-	org-agenda-skip-scheduled-if-done t
-	org-agenda-skip-deadline-if-done t
-	org-log-done nil
-	org-log-into-drawer nil
-	line-spacing 0.2
-	org-return-follows-link t
-	org-use-sub-superscripts "{}"
-	)
+  (setq-local line-spacing 0.25)
+  (setq-local header-line-format " ")
+  (setq org-fontify-whole-heading-line t)
+  (setq org-fontify-done-headline t)
+  (setq org-fontify-quote-and-verse-blocks t))
 
-  (setq org-refile-use-outline-path 'file)
-  (setq org-outline-path-complete-in-steps nil)
-  (setq org-refile-allow-creating-parent-nodes 'confirm)
-  (setq org-refile-targets '(("~/org/scrapyard/done_tasks.org" :maxlevel 2)))
-  
-  (advice-add 'org-refile :after 'org-save-all-org-buffers)
+(use-package org
+  :bind (("C-c a" . org-agenda)
+         ("C-c c" . org-capture)
+         ("C-c t" . org-set-tags-command)
+         ("C-c b" . org-switchb)
+         ("C-c i" . my/capture-inbox))
+  :hook (
+	 (org-mode . my/org-buffer-setup)
+         ;; Re-apply faces when org loads (and whenever theme changes below)
+         (org-mode . my/org-apply-faces)
+	 )
+  :init
+  ;; Theme-safe: re-apply after any theme load
+  (add-hook 'after-load-theme-hook #'my/org-apply-faces)
+  (setq org-hide-emphasis-markers t)
+
+  :custom
+  ;; display niceties
+  (org-pretty-entities t)
+  (org-return-follows-link t)
+  (org-use-sub-superscripts "{}")
+
+  ;; agenda behavior
+  (org-agenda-skip-unavailable-files t)
+  (org-agenda-mouse-1-follows-link t)
+  (org-agenda-skip-scheduled-if-done t)
+  (org-agenda-skip-deadline-if-done t)
+
+  ;; logging
+  (org-log-done nil)
+  (org-log-into-drawer nil)
+
+  :config
+  (setq org-agenda-files (my/org-agenda-files))
+
+  (setq org-refile-targets '((org-agenda-files :maxlevel . 2)))
+  (advice-add 'org-refile :after #'org-save-all-org-buffers)
 
   (setq org-todo-keywords
-	'((sequence "NEXT(n)" "PROJ(p)"  "WAITING(w)" "TODO(t)" "|" "DONE(d)" "CANCELED(c)")
-	  (sequence "WISH(i)" "|" "REALIZED(w)")
-	  (sequence "TO_READ(r)" "STARTED(s)"   "|" "FINISHED(f)")))
-  
-  (setq  org-agenda-prefix-format
-	 '((agenda . " %i %-12:c %?-12t% s")
-	   (todo . " %i %-12:c")
-	   (tags . " %i %-12:c")
-	   (search . " %i %-12:c")))
-  
-  (setq org-tag-alist
-	'((:startgroup)
-	  ("@home" . ?H)
-	  ("@work" . ?w)
-					; Put mutually exclusive tags here
-	  (:endgroup)))
-  
-  ;; Configure custom agenda views
-  (setq org-agenda-custom-commands
-	'(("n" "Next Tasks"
-	   ((todo "NEXT"
-		  ((org-agenda-overriding-header "Next Tasks")))))
-	  ("p" "Painpoints" todo "TODO" ((org-agenda-files '( "~/org/painpoint.org"))))
-          ("w" "Wishes" todo "WISH" ((org-agenda-prefix-format "")))))
-  
-  (setq org-capture-templates
-	`(("t" "Tasks / Projects")
-	  
-	  ("tp" "Painpoint" entry (file+headline "~/org/painpoint.org"  "Todo")
-	   "* TODO %?\n")
+        '((sequence "NEXT(n)" "PROJ(p)" "WAITING(w)" "TODO(t)" "|" "DONE(d)" "CANCELED(c)")
+          (sequence "WISH(i)" "|" "REALIZED(w)")
+          (sequence "TO_READ(r)" "STARTED(s)" "|" "FINISHED(f)")))
 
-	  ("i" "Ideas" entry (file+headline, "~/org/ideas.org" "Ideas")
-	   "* %?\n")
-	  
-	  ("b" "Inbox" entry (file+headline, "~/org/inbox.org" "Inbox")
-	   "* %?\n")	      
-	  
-	  ("l" "List of items")
-	  ("lb" "To buy" entry (file+olp, "~/org/buy_list.org" "Buy list")
-	   "*** %?\n")))
+  (setq org-agenda-prefix-format
+        '((agenda . " %i %-12:c %?-12t% s")
+          (todo   . " %i %-12:c")
+          (tags   . " %i %-12:c")
+          (search . " %i %-12:c")))
+
+  (setq org-tag-alist
+        '((:startgroup)
+          ("@home" . ?H)
+          ("@work" . ?w)
+          (:endgroup)))
+
+  (setq org-agenda-custom-commands
+        '(("n" "Next Tasks"
+           ((todo "NEXT" ((org-agenda-overriding-header "Next Tasks")))))
+          ("p" "Painpoints"
+           ((todo "TODO"
+                  ((org-agenda-files '("~/org/painpoint.org"))
+                   (org-agenda-overriding-header "Painpoints")))))
+          ("w" "Wishes"
+           ((todo "WISH"
+                  ((org-agenda-prefix-format "")
+                   (org-agenda-overriding-header "Wishes")))))))
+
+  (setq org-capture-templates
+        '(("t" "Tasks / Projects")
+          ("tp" "Painpoint" entry (file+headline "~/org/painpoint.org" "Todo")
+           "* TODO %?\n")
+
+          ("i" "Ideas" entry (file+headline "~/org/ideas.org" "Ideas")
+           "* %?\n")
+
+          ("b" "Inbox" entry (file+headline "~/org/inbox.org" "Inbox")
+           "* %?\n")
+
+          ("l" "List of items")
+          ("lb" "To buy" entry (file+olp "~/org/buy_list.org" "Buy list")
+           "*** %?\n")))
+
   ;; -------- ORG BABEL ------------
-  
   (setq org-babel-python-command "python3"
-	org-confirm-babel-evaluate nil)
-  
+        org-confirm-babel-evaluate nil)
+
   (org-babel-do-load-languages
    'org-babel-load-languages
    '((emacs-lisp . t)
      (python . t)
      (dot . t)
-     (shell . t)))
-  
+     (shell . t))))
 
-  (defun my/capture-inbox()
-    (interactive)
-    (org-capture nil "b"))
-  
-  (global-set-key "\C-ci" 'my/capture-inbox))
+(defun my/capture-inbox ()
+  (interactive)
+  (org-capture nil "b"))
 
-(use-package org-fragtog 
+;;;; ---------------- EXTRAS ----------------
+
+(use-package org-fragtog
+  :after org
+  :init
+  (setq org-startup-with-latex-preview t)
   :hook
-  (org-mode . org-fragtog-mode))
-
-(use-package visual-fill-column
-  :hook (org-mode . my/org-mode-visual-fill)
+  (org-mode . org-fragtog-mode)
   :config
-  (defun my/org-mode-visual-fill ()
-    (setq visual-fill-column-width 100)
-    (visual-fill-column-mode 1) ) )
+  (setq org-format-latex-options
+        (let ((opts (copy-sequence org-format-latex-options)))
+          (plist-put (plist-put (plist-put opts :scale 2)
+                                :foreground 'auto)
+                     :background 'auto))))
 
 
 (use-package org-modern
-  :mode ("\\.org\\'" . org-mode)
-  :config (setq org-hide-emphasis-markers t)
-  (setq org-modern-star 'replace
-	org-modern-replace-stars "◉○")  
-  :hook (org-mode . global-org-modern-mode))
+  :after org
+  :hook (org-mode . org-modern-mode)
+  :custom
+  (org-modern-star 'replace)
+  (org-modern-replace-stars "◉○"))
 
 (use-package org-appear
-  :hook (org-mode . org-appear-mode))
+  :after org
+  :hook (org-mode . org-appear-mode)
+  :custom
+  (org-appear-autoemphasis t)
+  (org-appear-autosubmarkers t))
 
 ;; -------------------- Org config end --------------------
 
@@ -744,7 +783,6 @@
   :custom
   (elfeed-db-directory
    (expand-file-name "elfeed" user-emacs-directory))
-  (elfeed-show-entry t)
   :bind (("C-c e" . elfeed))
   :config
   (setq elfeed-feeds
