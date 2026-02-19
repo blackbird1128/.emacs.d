@@ -107,7 +107,14 @@
         sentence-end-double-space nil
         grep-command "rg -n -H --no-heading -e '' $(git rev-parse --show-toplevel || pwd)"
         compilation-scroll-output t
-        compilation-max-output-line-length nil)
+        compilation-max-output-line-length nil
+	)
+
+  ;; Auto-reload buffers when files change on disk
+  (setq auto-revert-verbose nil
+	global-auto-revert-non-file-buffers t)   ; revert dired, etc.
+  (global-auto-revert-mode 1)                    ; <-- enable the mode IMPORTANT
+
 
   (setopt dictionary-server "dict.org"
           text-mode-ispell-word-completion nil)
@@ -758,8 +765,8 @@
   (setq org-format-latex-options
         (let ((opts (copy-sequence org-format-latex-options)))
           (plist-put (plist-put (plist-put opts :scale 2)
-                                :foreground 'auto)
-                     :background 'auto))))
+                                :foreground 'default)
+                     :background 'default))))
 
 
 (use-package org-modern
