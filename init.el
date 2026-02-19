@@ -328,6 +328,39 @@
   (setq flymake-diagnostic-format-alist
         '((t . (origin code message))))) ; Fix messages not being completely displayed in Ocaml for example
 
+(custom-set-faces
+ '(proof-locked-face ((t (:background "#3c3836")))))
+
+(use-package company-coq
+  :hook (coq-mode . company-coq-mode))
+
+;;;;;;;;;;;;;;;;; why3 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package why3
+  :defer 3
+  :load-path "lisp"
+  :mode ("\\.mlw\\'" . why3-mode)
+  :bind (:map why3-mode-map
+	      ("C-c C-c" . compile)))
+
+;;;;;;;;;;;;;;;;;; ocaml setup ;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package direnv
+  :config
+  (direnv-mode))
+
+(use-package tuareg
+  :mode (("\\.ocamlinit\\'" . tuareg-mode))
+  :hook (tuareg-mode . display-line-numbers-mode))
+
+(use-package utop
+  :hook (tuareg-mode . utop-minor-mode))
+
+(use-package dune
+  :mode ("\\`dune\\(?:-project\\)?\\'" . dune-mode))
+
+(defun remove-highlight () (setq mouse-highlight nil))
+
 (defun my/eglot-capf ()
   (setq-local completion-at-point-functions
 	      (list (cape-capf-super
@@ -403,6 +436,7 @@
 (use-package direnv
   :config
   (direnv-mode))
+
 
 (use-package tuareg
   :mode (("\\.ocamlinit\\'" . tuareg-mode))
