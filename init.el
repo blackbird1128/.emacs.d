@@ -475,6 +475,12 @@
 
 (use-package markdown-mode)
 
+;;;;;;;;;;;;; docker config ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package docker
+  :ensure t
+  :bind ("C-c d" . docker))
+
 ;;;;;;;;;;;; yaml config ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package yaml-mode)
