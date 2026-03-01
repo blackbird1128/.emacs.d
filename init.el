@@ -334,6 +334,14 @@
 (use-package company-coq
   :hook (coq-mode . company-coq-mode))
 
+
+(use-package treesit-auto
+  :custom
+  (treesit-auto-install 'prompt)
+  :config
+  (treesit-auto-add-to-auto-mode-alist 'all)
+  (global-treesit-auto-mode))
+
 ;;;;;;;;;;;;;;;;; why3 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package why3
@@ -419,8 +427,8 @@
  '(rocq-mode-last-goal-request ((t (:background "#3c3836"))))
  )
 
-;; (use-package company-coq
-;;   :hook (rocq-mode . company-coq-mode))
+(use-package company-coq
+  :hook (coq-mode . company-coq-mode))
 
 ;;;;;;;;;;;;;;;;; why3 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
