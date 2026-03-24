@@ -371,6 +371,9 @@
   (global-set-key (kbd "C-c l") 'eglot-keymap) ;; Bind C-c l to the prefix keymap
   (add-to-list 'eglot-server-programs
 	       '(why3-mode . ("why3find" "lsp" "--port" :autoport)))
+  (add-to-list 'eglot-server-programs
+            '((python-mode python-ts-mode)
+            "basedpyright-langserver" "--stdio"))
   (setq eglot-headerline-breadcrumb-segments
 	'(project file symbols))
 
