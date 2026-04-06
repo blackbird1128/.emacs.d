@@ -47,13 +47,6 @@
 (setq auth-sources
       '((:source "~/.authinfo")))
 
-(defun my/get-api-key (host user)
-  "Get API key from .authinfo for HOST and USER."
-  (let ((entry (car (auth-source-search :host host :user user :require '(:secret)))))
-    (when entry
-      (let ((secret (plist-get entry :secret)))
-        (if (functionp secret) (funcall secret) secret)))))
-
 (setq native-comp-async-report-warnings-errors nil)
 (setq custom-file (concat user-emacs-directory "custom.el"))
 (when (file-exists-p custom-file)
@@ -323,9 +316,6 @@
   (setq flymake-diagnostic-format-alist
         '((t . (origin code message))))) ; Fix messages not being completely displayed in Ocaml for example
 
-(custom-set-faces
- '(proof-locked-face ((t (:background "#3c3836")))))
-
 (use-package treesit-auto
   :custom
   (treesit-auto-install 'prompt)
@@ -376,7 +366,7 @@
             "basedpyright-langserver" "--stdio"))
   (setq eglot-headerline-breadcrumb-segments
 	'(project file symbols))
-
+  (setq eldoc-echo-area-use-multiline-p t)
   
   :hook ((tuareg-mode .  eglot-ensure ) (python-mode . eglot-ensure) (why3-mode . eglot-ensure))
   :commands (eglot))
@@ -393,18 +383,9 @@
    proof-electric-terminator-enable nil
    PA-one-command-per-line nil))
 
- ;; (use-package rocq-mode
- ;;    :vc (:url "https://codeberg.org/jpoiret/rocq-mode.el.git"
- ;;         :rev :newest)
- ;;    :mode "\\.v\\'"
- ;;    :hook
- ;;    (rocq-mode . rocq-follow-viewport-mode)
- ;;    (rocq-mode . rocq-auto-goals-at-point-mode))
-
 (custom-set-faces
  '(proof-locked-face ((t (:background "#3c3836"))))
- '(rocq-mode-last-goal-request ((t (:background "#3c3836"))))
- )
+ '(rocq-mode-last-goal-request ((t (:background "#3c3836")))))
 
 (use-package company-coq
   :hook (coq-mode . company-coq-mode))
@@ -414,7 +395,6 @@
 (use-package direnv
   :config
   (direnv-mode))
-
 
 (use-package tuareg
   :mode (("\\.ocamlinit\\'" . tuareg-mode))
@@ -428,11 +408,29 @@
   :hook
   ((coq-mode tuareg-mode) . opam-switch-mode))
 
+(defvar my/ocamlformat--warned nil
+  "Whether we've warned about missing ocamlformat in this session.")
+
+(defun my/maybe-ocamlformat-before-save ()
+  "Format the current buffer with ocamlformat when available."
+  (if (executable-find "ocamlformat")
+      (ocamlformat-before-save)
+    (unless my/ocamlformat--warned
+      (setq my/ocamlformat--warned t)
+      (display-warning 'ocamlformat
+                       "ocamlformat executable not found; auto-format skipped."))))
+
+(defun my/setup-ocamlformat ()
+  "Add a buffer-local save hook for ocamlformat."
+  (add-hook 'before-save-hook #'my/maybe-ocamlformat-before-save nil t))
+
 (use-package ocamlformat
   :custom
   (ocamlformat-enable 'enable-outside-detected-project)
   :hook
-  (before-save .  ocamlformat-before-save))
+  ((tuareg-mode . my/setup-ocamlformat)
+   (tuareg-ts-mode . my/setup-ocamlformat)
+   (ocaml-ts-mode . my/setup-ocamlformat)))
 
 (use-package dune
   :mode ("\\`dune\\(?:-project\\)?\\'" . dune-mode))
@@ -569,8 +567,7 @@
     (save-excursion
       (shell-command-on-region
        beg end "latexindent -l" (current-buffer) t)))
-  :bind ( "<backtab>" . my/latexindent-region)
-  )
+  :bind ( "<backtab>" . my/latexindent-region))
 
 (use-package citar
   :hook
@@ -584,11 +581,6 @@
 
 (use-package hammy
   :defer 3)
-
-(use-package gptel
-  :defer 5
-  :config
-  (gptel-make-gemini "Gemini" :key (my/get-api-key "generativelanguage.googleapis.com" "apikey") :stream t))
 
 ;;;;;;;;;;;; howm ;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -681,11 +673,9 @@
          ("C-c t" . org-set-tags-command)
          ("C-c b" . org-switchb)
          ("C-c i" . my/capture-inbox))
-  :hook (
-	 (org-mode . my/org-buffer-setup)
+  :hook ((org-mode . my/org-buffer-setup)
          ;; Re-apply faces when org loads (and whenever theme changes below)
-         (org-mode . my/org-apply-faces)
-	 )
+         (org-mode . my/org-apply-faces))
   :init
   ;; Theme-safe: re-apply after any theme load
   (add-hook 'after-load-theme-hook #'my/org-apply-faces)
@@ -787,7 +777,6 @@
                                 :foreground 'default)
                      :background 'default))))
 
-
 (use-package org-modern
   :after org
   :hook (org-mode . org-modern-mode)
@@ -803,14 +792,3 @@
   (org-appear-autosubmarkers t))
 
 ;; -------------------- Org config end --------------------
-
-(use-package elfeed
-  :defer 4
-  :custom
-  (elfeed-db-directory
-   (expand-file-name "elfeed" user-emacs-directory))
-  :bind (("C-c e" . elfeed))
-  :config
-  (setq elfeed-feeds
-	'("http://nullprogram.com/feed/"
-          "https://planet.emacslife.com/atom.xml")))
