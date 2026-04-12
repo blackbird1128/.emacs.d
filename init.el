@@ -100,8 +100,7 @@
         sentence-end-double-space nil
         grep-command "rg -n -H --no-heading -e '' $(git rev-parse --show-toplevel || pwd)"
         compilation-scroll-output t
-        compilation-max-output-line-length nil
-	)
+        compilation-max-output-line-length nil)
 
   ;; Auto-reload buffers when files change on disk
   (setq auto-revert-verbose nil
@@ -117,8 +116,7 @@
   
   (recentf-mode 1)
   (setq recentf-max-menu-items 25)
-  (global-set-key (kbd "C-x C-r") 'recentf-open-files)
-  )
+  (global-set-key (kbd "C-x C-r") 'recentf-open-files))
 
 (defun my/chicken-icon (_1 _2 _3)
   (propertize "🐔"
@@ -186,7 +184,7 @@
 	 ("C-c s" . consult-ripgrep)
 	 ("C-c f" . consult-flymake)
 	 ("C-c m" . consult-imenu)
-					;("C-c i" . consult-info)
+
          ([remap Info-search] . consult-info)
          ;; C-x bindings in `ctl-x-map'
          ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
@@ -404,7 +402,6 @@
   :hook (tuareg-mode . utop-minor-mode))
 
 (use-package opam-switch-mode
-  :ensure t
   :hook
   ((coq-mode tuareg-mode) . opam-switch-mode))
 
@@ -543,8 +540,7 @@
   (add-hook 'LaTeX-mode-hook
             (lambda ()
 	      (setq lsp-tex-server 'digestif)
-	      (put 'LaTeX-mode 'eglot-language-id "latex")
-	      ))
+	      (put 'LaTeX-mode 'eglot-language-id "latex")))
 
   (add-hook 'TeX-after-compilation-finished-functions
             #'TeX-revert-document-buffer)
@@ -576,7 +572,6 @@
   :config
   (setq citar-bibliography '("~/org/phd/doctorat_aj.bib")))
 
-;;;;;;;;;;;;;;;; writing ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Productivity stuff
 
 (use-package hammy
