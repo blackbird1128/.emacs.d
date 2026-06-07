@@ -66,10 +66,21 @@
   :config
   (exec-path-from-shell-copy-envs '("PATH" "MANPATH" "INFOPATH")))
 
+(defconst my/scratch-buffer-phrases
+  '(";; This buffer is for notes you do not trust yet.\n\n"
+    ";; Evaluate gently. Refactor mercilessly.\n\n"
+    ";; The first draft belongs in *scratch*.\n\n"
+    ";; A temporary place for permanent ideas.\n\n"
+    ";; Lisp goes here when it wants some air.\n\n"))
+
 (use-package emacs
   :demand
   :bind (("C-x C-b" . switch-to-buffer))
   :init
+  (random t)
+  (setq initial-scratch-message
+        (nth (random (length my/scratch-buffer-phrases))
+             my/scratch-buffer-phrases))
   (setq auto-mode-alist (remove (rassoc 'verilog-mode auto-mode-alist) auto-mode-alist))
   (setq enable-recursive-minibuffers t)
   (setq read-extended-command-predicate #'command-completion-default-include-p)
