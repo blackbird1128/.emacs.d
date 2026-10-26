@@ -154,7 +154,9 @@
 (use-package eat
   :hook ((eshell-mode . eat-eshell-mode)))
 
-(use-package try)
+(use-package try
+  :defer t
+)
 
 (use-package rainbow-delimiters
   :hook ((emacs-lisp-mode . rainbow-delimiters-mode)
@@ -384,6 +386,7 @@
 
 (use-package proof-general
   :defer 4
+  :init
   :config
   (setq
    proof-three-window-enable t
@@ -446,11 +449,13 @@
 ;;;;;;;;;;;;;;;; python config ;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package poetry
-  :ensure t)
+  :defer t)
 
 ;;;;;;;;;;;;;; markdown config ;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package markdown-mode)
+(use-package markdown-mode
+  :mode ("\\.md\\'" . markdown-mode)
+  :mode ("\\.markdown\\'" . markdown-mode))
 
 ;;;;;;;;;;;;; docker config ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -460,7 +465,8 @@
 
 ;;;;;;;;;;;; yaml config ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package yaml-mode)
+(use-package yaml-mode
+  :mode "\\.ya?ml\\'")
 
 ;;;;; nix config ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -599,7 +605,9 @@
   :defer 3
   :hook ((org-mode . howm-mode))
   :init
-  (setq howm-directory "~/org/"
+  (setq
+        howm-home-directory "~/howm/"
+        howm-directory "~/howm/"	
         howm-create-id t
         howm-follow-theme t
         howm-view-use-grep t
