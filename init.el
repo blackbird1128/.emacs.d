@@ -379,7 +379,10 @@
 	'(project file symbols))
   (setq eldoc-echo-area-use-multiline-p t)
   
-  :hook ((tuareg-mode .  eglot-ensure ) (python-mode . eglot-ensure) (why3-mode . eglot-ensure))
+  :hook ((tuareg-mode . eglot-ensure)
+         (python-mode . eglot-ensure)
+         (python-ts-mode . eglot-ensure)
+         (why3-mode . eglot-ensure))
   :commands (eglot))
 
 ;;;;;;;;;;;;;;;;;;;;; coq-setup ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -625,7 +628,7 @@
 (defun my/org--font-exists-p (font)
   (and font (find-font (font-spec :name font))))
 
-(defun my/org-apply-faces ()
+(defun my/org-apply-faces (&optional _theme)
   "Apply Org faces in a theme-safe way."
   (when (featurep 'doom-themes) ;; if you use doom-themes colors
     (let* ((variable-font (cond
@@ -693,7 +696,7 @@
          (org-mode . my/org-apply-faces))
   :init
   ;; Theme-safe: re-apply after any theme load
-  (add-hook 'after-load-theme-hook #'my/org-apply-faces)
+  (add-hook 'enable-theme-functions #'my/org-apply-faces)
   (setq org-hide-emphasis-markers t)
 
   :custom
@@ -763,8 +766,7 @@
            "*** %?\n")))
 
   ;; -------- ORG BABEL ------------
-  (setq org-babel-python-command "python3"
-        org-confirm-babel-evaluate nil)
+  (setq org-babel-python-command "python3")
 
   (org-babel-do-load-languages
    'org-babel-load-languages
