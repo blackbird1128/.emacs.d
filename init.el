@@ -318,7 +318,7 @@
 
 (use-package crux
   :bind
-  (("C-c d" . crux-delete-file-and-buffer)))
+  (("C-c D" . crux-delete-file-and-buffer)))
 
 (use-package flymake
   :ensure t
@@ -580,7 +580,8 @@
     (save-excursion
       (shell-command-on-region
        beg end "latexindent -l" (current-buffer) t)))
-  :bind ( "<backtab>" . my/latexindent-region))
+  :bind (:map LaTeX-mode-map
+              ("<backtab>" . my/latexindent-region)))
 
 (use-package citar
   :hook
