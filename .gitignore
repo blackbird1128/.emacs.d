@@ -1,6 +1,12 @@
 /auto-save-list
 /elpa
 /eln-cache
+/elfeed/
+/tree-sitter/
+/var/
+/projects
 /tmp
 /url
+*.elc
+*~
 \#**
