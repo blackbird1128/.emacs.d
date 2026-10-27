@@ -232,7 +232,7 @@
   (embark-collect-mode . consult-preview-at-point-mode))
 
 (use-package wgrep
-  :defer 5)
+  :defer t)
 
 (use-package which-key
   :init
@@ -307,7 +307,6 @@
   (("M-j" . avy-goto-char-timer)))
 
 (use-package jinx
-  :defer 2
   :hook (emacs-startup . global-jinx-mode)
   :bind (("M-$" . jinx-correct)
          ("C-M-$" . jinx-languages)))
@@ -337,7 +336,6 @@
 ;;;;;;;;;;;;;;;;; why3 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package why3
-  :defer 3
   :load-path "lisp"
   :mode ("\\.mlw\\'" . why3-mode)
   :bind (:map why3-mode-map
@@ -348,10 +346,13 @@
 
 (defun my/eglot-capf ()
   (setq-local completion-at-point-functions
-	      (list (cape-capf-super
-                     #'eglot-completion-at-point
-		     #'cape-file
-                     #'yasnippet-capf))))
+              (cl-substitute
+               (cape-capf-super
+                #'eglot-completion-at-point
+                #'cape-file
+                #'yasnippet-capf)
+               #'eglot-completion-at-point
+               completion-at-point-functions)))
 
 (use-package eglot
   :init
@@ -388,9 +389,8 @@
 ;;;;;;;;;;;;;;;;;;;;; coq-setup ;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package proof-general
-  :defer 4
+  :defer t
   :init
-  :config
   (setq
    proof-three-window-enable t
    proof-splash-enable nil
@@ -596,7 +596,7 @@
 ;; Productivity stuff
 
 (use-package hammy
-  :defer 3)
+  :commands (hammy-start hammy-start-org-clock-in hammy-mode))
 
 ;;;;;;;;;;;; howm ;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -606,7 +606,6 @@
 
 (use-package howm
   :after howm-org
-  :defer 3
   :hook ((org-mode . howm-mode))
   :init
   (setq
