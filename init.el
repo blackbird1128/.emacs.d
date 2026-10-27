@@ -109,7 +109,7 @@
         visual-fill-column-width 80
         visible-bell t
         sentence-end-double-space nil
-        grep-command "rg -n -H --no-heading -e '' $(git rev-parse --show-toplevel || pwd)"
+        grep-command "rg -n -H --no-heading -e '' \"$(git rev-parse --show-toplevel || pwd)\""
         compilation-scroll-output t
         compilation-max-output-line-length nil)
 
@@ -369,13 +369,15 @@
 	("i" . eglot-find-implementation)  ;; Go to implementation
 	("t" . eglot-find-type-definition)) ;; Go to type definition
   :config
-  (define-prefix-command 'eglot-keymap)    ;; Define the prefix keymap
-  (global-set-key (kbd "C-c l") 'eglot-keymap) ;; Bind C-c l to the prefix keymap
+  (define-prefix-command 'eglot-keymap)
+  (define-key eglot-mode-map (kbd "C-c l") 'eglot-keymap)
   (add-to-list 'eglot-server-programs
 	       '(why3-mode . ("why3find" "lsp" "--port" :autoport)))
   (add-to-list 'eglot-server-programs
             '((python-mode python-ts-mode)
             "basedpyright-langserver" "--stdio"))
+  (add-to-list 'eglot-server-programs
+               '(LaTeX-mode . ("digestif")))
   (setq eglot-headerline-breadcrumb-segments
 	'(project file symbols))
   (setq eldoc-echo-area-use-multiline-p t)
@@ -557,16 +559,12 @@
 	 (LaTeX-mode . outline-minor-mode))
   
   :config
-  (add-hook 'LaTeX-mode-hook
-            (lambda ()
-	      (setq lsp-tex-server 'digestif)
-	      (put 'LaTeX-mode 'eglot-language-id "latex")))
+  (put 'LaTeX-mode 'eglot-language-id "latex")
 
   (add-hook 'TeX-after-compilation-finished-functions
             #'TeX-revert-document-buffer)
   
-  (setq +latex-viewers '(pdf-tools)
-	TeX-command-extra-options "--shell-escape"
+  (setq TeX-command-extra-options "--shell-escape"
 	TeX-auto-save t
 	TeX-parse-self t
 	reftex-plug-into-AUCTeX t
@@ -782,8 +780,7 @@
 
 (use-package org-fragtog
   :after org
-  :init
-  (setq org-startup-with-latex-preview t)
+  ;; Add "#+STARTUP: latexpreview" to an Org file to preview its LaTeX on open.
   :hook
   (org-mode . org-fragtog-mode)
   :config
